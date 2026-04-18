@@ -16,24 +16,7 @@
 
 </div>
 
-## ▮ SYSTEM_SPECIFICATIONS
 
-* **CORE_ENGINE**: Next.js 15 (App Router)
-* **NEURAL_INTERFACE**: Framer Motion (Cyber-Scramble & Decryption Logic)
-* **FLUID_DYNAMICS**: Three.js / React Three Fiber (Liquid Blob Shader)
-* **VISUAL_LANGUAGE**: Brutalist / Minimalist CSS (Tailwind)
-* **UPLINK_PROTOCOL**: Nodemailer Secure Terminal Integration
-
----
-
-## ▮ DEPLOYMENT_STATUS
-| NODE | STATUS | LOCATION |
-| :--- | :--- | :--- |
-| **Production** | `ONLINE` | Vercel Edge |
-| **Terminal** | `ACTIVE` | /contact |
-| **Architecture** | `ENCRYPTED` | /app |
-
----
 
 <div align="center">
 
