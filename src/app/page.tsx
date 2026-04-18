@@ -325,7 +325,8 @@ export default function StudioTenHome() {
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (isScrollingRef.current) return;
+      // Block scrolling if still loading
+      if (!isReady || isScrollingRef.current) return;
       const direction = e.deltaY > 0 ? 1 : -1;
       scrollToSection(currentSectionRef.current + direction);
     };
@@ -333,7 +334,8 @@ export default function StudioTenHome() {
     let touchStartY = 0;
     const handleTouchStart = (e: TouchEvent) => { touchStartY = e.touches[0].clientY; };
     const handleTouchEnd = (e: TouchEvent) => {
-      if (isScrollingRef.current) return;
+      // Block scrolling if still loading
+      if (!isReady || isScrollingRef.current) return;
       const deltaY = touchStartY - e.changedTouches[0].clientY;
       if (Math.abs(deltaY) > 40) {
         scrollToSection(currentSectionRef.current + (deltaY > 0 ? 1 : -1));
@@ -341,12 +343,16 @@ export default function StudioTenHome() {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isScrollingRef.current) return;
+      // Block scrolling if still loading
+      if (!isReady) return; 
+      
       if (e.key === 'ArrowDown' || e.key === 'PageDown') {
         e.preventDefault();
+        if (isScrollingRef.current) return;
         scrollToSection(currentSectionRef.current + 1);
       } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
         e.preventDefault();
+        if (isScrollingRef.current) return;
         scrollToSection(currentSectionRef.current - 1);
       }
     };
@@ -363,10 +369,14 @@ export default function StudioTenHome() {
       window.removeEventListener(   'keydown',    handleKeyDown);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [scrollToSection]);
+  }, [scrollToSection, isReady]); // Make sure isReady is added to the dependency array
 
   return (
-    <main ref={scrollContainerRef} className="relative w-full h-screen overflow-y-auto overflow-x-hidden bg-[#020202] text-white cursor-crosshair">
+    <main 
+      ref={scrollContainerRef} 
+      // dynamically toggle overflow-y-auto to hide the scrollbar/native scroll during the preloader
+      className={`relative w-full h-screen overflow-x-hidden bg-[#020202] text-white cursor-crosshair ${isReady ? 'overflow-y-auto' : 'overflow-y-hidden'}`}
+    >
       <AnimatePresence>
         {!isReady && <Preloader key="preloader" onComplete={() => setIsReady(true)} />}
       </AnimatePresence>
