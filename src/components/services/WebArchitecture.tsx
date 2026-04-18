@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 
@@ -622,15 +622,14 @@ function NativeFluidCanvas() {
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
       const touches = e.targetTouches;
       const hue = (Date.now() % 5000) / 5000;
 
       for (let i = 0; i < touches.length; i++) {
         const pointer = pointers[i];
         if(pointer) {
-          const dx = touches[i].pageX - pointer.x;
-          const dy = touches[i].pageY - pointer.y;
+          const dx = touches[i].clientX - pointer.x;
+          const dy = touches[i].clientY - pointer.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           const steps = Math.min(50, Math.max(1, Math.floor(dist / 10)));
 
@@ -644,8 +643,8 @@ function NativeFluidCanvas() {
             });
           }
 
-          pointer.x = touches[i].pageX;
-          pointer.y = touches[i].pageY;
+          pointer.x = touches[i].clientX;
+          pointer.y = touches[i].clientY;
           pointer.dx = dx * 12.0;
           pointer.dy = dy * 12.0;
           pointer.down = true;
@@ -654,7 +653,6 @@ function NativeFluidCanvas() {
     };
 
     const handleTouchStart = (e: TouchEvent) => {
-      e.preventDefault();
       const touches = e.targetTouches;
       const hue = (Date.now() % 5000) / 5000;
 
@@ -662,8 +660,8 @@ function NativeFluidCanvas() {
         if (i >= pointers.length) pointers.push(new Pointer());
         pointers[i].id = touches[i].identifier;
         pointers[i].down = true;
-        pointers[i].x = touches[i].pageX;
-        pointers[i].y = touches[i].pageY;
+        pointers[i].x = touches[i].clientX;
+        pointers[i].y = touches[i].clientY;
         pointers[i].color = HSVtoRGB((hue + (i * 0.2)) % 1, 1.0, 1.0);
       }
     };
@@ -688,8 +686,8 @@ function NativeFluidCanvas() {
     };
 
     canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: true });
     window.addEventListener('mouseleave', handleMouseLeave);
     window.addEventListener('touchend', handleTouchEnd);
 
@@ -711,18 +709,42 @@ function NativeFluidCanvas() {
 export default function WebArchitecturePage() {
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: containerRef });
-
   const scale = useTransform(scrollYProgress, [0, 1], [80, 1]);
+  
+  const [mountCanvas, setMountCanvas] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMountCanvas(true);
+    }, 1300);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <main ref={containerRef} className="h-[300vh] w-full bg-[#020202] cursor-crosshair">
-      <motion.div
-        initial={{ y: "-25vh" }} 
-        animate={{ y: "-150vh" }} 
-        transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1] }}
-        className="fixed top-0 left-[-25vw] w-[150vw] h-[150vh] bg-[#020202] z-[9999] pointer-events-none origin-center"
-        style={{ rotate: "-10deg" }}
-      />
+      <div className="fixed inset-0 z-[9999] pointer-events-none overflow-hidden flex items-center justify-center">
+        <svg className="absolute w-0 h-0">
+          <defs>
+            <filter id="torn-edge-in" x="-20%" y="-20%" width="140%" height="140%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="2" result="noise" />
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="80" xChannelSelector="R" yChannelSelector="G" />
+            </filter>
+          </defs>
+        </svg>
+
+        <motion.div
+          initial={{ x: "-10%", y: "-10%", rotate: -45 }}
+          animate={{ x: "-150%", y: "-150%", rotate: -45 }}
+          transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1], delay: 0.1 }}
+          className="absolute w-[300vw] h-[300vh] bg-[#020202]"
+          style={{ 
+            filter: "url(#torn-edge-in)",
+            willChange: "transform" 
+          }}
+        >
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
+        </motion.div>
+      </div>
       
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -741,87 +763,100 @@ export default function WebArchitecturePage() {
       <div className="fixed inset-0 w-full h-screen overflow-hidden pointer-events-none">
         
         <div className="absolute inset-0 z-0 bg-black pointer-events-auto">
-           <NativeFluidCanvas />
+           {mountCanvas && (
+             <motion.div 
+               initial={{ opacity: 0 }} 
+               animate={{ opacity: 1 }} 
+               transition={{ duration: 1.5, ease: "easeInOut" }} 
+               className="absolute inset-0 w-full h-full"
+             >
+               <NativeFluidCanvas />
+             </motion.div>
+           )}
         </div>
         
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.5, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.5, delay: 0.4, ease: [0.16, 1, 0.3, 1] }} 
           className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
         >
+          
           <motion.svg 
             viewBox="0 0 1000 300" 
-            style={{ 
-              scale, 
-              transformOrigin: "47% 48%" 
-            }}
-            className="w-[90vw] max-w-7xl overflow-visible"
+            style={{ scale, transformOrigin: "50% 50%" }}
+            className="hidden md:block w-[90vw] max-w-7xl overflow-visible"
           >
             <defs>
-              <linearGradient id="cyber-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#ff0080" />
-                <stop offset="50%" stopColor="#7928ca" />
-                <stop offset="100%" stopColor="#00d2ff" />
+              <linearGradient id="neon-wave" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox" spreadMethod="repeat">
+                <stop offset="0%" stopColor="transparent" />
+                <stop offset="15%" stopColor="#ff0080" />
+                <stop offset="50%" stopColor="#ffffff" />
+                <stop offset="85%" stopColor="#00d2ff" />
+                <stop offset="100%" stopColor="transparent" />
+                <animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="1 1" dur="6s" repeatCount="indefinite" />
               </linearGradient>
+
               <mask id="fluid-mask">
-                <rect x="-100%" y="-100%" width="300%" height="300%" fill="white" />
+                <rect x="-5000%" y="-5000%" width="10000%" height="10000%" fill="white" />
                 <text x="50%" y="40%" textAnchor="middle" dominantBaseline="middle" fill="black" className="text-[120px] font-black uppercase tracking-tighter">WEB</text>
                 <text x="50%" y="80%" textAnchor="middle" dominantBaseline="middle" fill="black" className="text-[120px] font-black uppercase tracking-tighter">DEVELOPMENT</text>
               </mask>
             </defs>
             
-            <rect 
-              x="-100%" y="-100%" width="300%" height="300%" 
-              fill="rgba(0, 0, 0, 0.80)" 
-              mask="url(#fluid-mask)" 
-            />
+            <rect x="-5000%" y="-5000%" width="10000%" height="10000%" fill="rgba(0, 0, 0, 0.80)" mask="url(#fluid-mask)" />
+            
+            <text x="50%" y="40%" textAnchor="middle" dominantBaseline="middle" fill="rgba(255, 255, 255, 0.03)" className="text-[120px] font-black uppercase tracking-tighter">WEB</text>
+            <text x="50%" y="80%" textAnchor="middle" dominantBaseline="middle" fill="rgba(255, 255, 255, 0.03)" className="text-[120px] font-black uppercase tracking-tighter">DEVELOPMENT</text>
+            
+            <text vectorEffect="non-scaling-stroke" x="50%" y="40%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" className="text-[120px] font-black uppercase tracking-tighter">WEB</text>
+            <text vectorEffect="non-scaling-stroke" x="50%" y="80%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" className="text-[120px] font-black uppercase tracking-tighter">DEVELOPMENT</text>
 
-            <text 
-              x="50%" y="40%" 
-              textAnchor="middle" dominantBaseline="middle" 
-              fill="rgba(255, 255, 255, 0.03)" 
-              className="text-[120px] font-black uppercase tracking-tighter"
-            >
-              WEB
-            </text>
-            <text 
-              x="50%" y="80%" 
-              textAnchor="middle" dominantBaseline="middle" 
-              fill="rgba(255, 255, 255, 0.03)" 
-              className="text-[120px] font-black uppercase tracking-tighter"
-            >
-              DEVELOPMENT
-            </text>
-
-            <text 
-              vectorEffect="non-scaling-stroke"
-              x="50%" y="40%" 
-              textAnchor="middle" dominantBaseline="middle" 
-              fill="none" stroke="url(#cyber-gradient)" strokeWidth="2.5" 
-              className="text-[120px] font-black uppercase tracking-tighter"
-              style={{ mixBlendMode: 'color-dodge' }}
-            >
-              WEB
-            </text>
-            <text 
-              vectorEffect="non-scaling-stroke"
-              x="50%" y="80%" 
-              textAnchor="middle" dominantBaseline="middle" 
-              fill="none" stroke="url(#cyber-gradient)" strokeWidth="2.5" 
-              className="text-[120px] font-black uppercase tracking-tighter"
-              style={{ mixBlendMode: 'color-dodge' }}
-            >
-              DEVELOPMENT
-            </text>
+            <text vectorEffect="non-scaling-stroke" x="50%" y="40%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="url(#neon-wave)" strokeWidth="3" className="text-[120px] font-black uppercase tracking-tighter" style={{ mixBlendMode: 'screen' }}>WEB</text>
+            <text vectorEffect="non-scaling-stroke" x="50%" y="80%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="url(#neon-wave)" strokeWidth="3" className="text-[120px] font-black uppercase tracking-tighter" style={{ mixBlendMode: 'screen' }}>DEVELOPMENT</text>
           </motion.svg>
+
+          <motion.svg 
+            viewBox="0 0 1000 800" 
+            style={{ scale, transformOrigin: "50% 50%" }}
+            className="block md:hidden w-[95vw] overflow-visible"
+          >
+            <defs>
+              <linearGradient id="neon-wave-mobile" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox" spreadMethod="repeat">
+                <stop offset="0%" stopColor="transparent" />
+                <stop offset="15%" stopColor="#ff0080" />
+                <stop offset="50%" stopColor="#ffffff" />
+                <stop offset="85%" stopColor="#00d2ff" />
+                <stop offset="100%" stopColor="transparent" />
+                <animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="1 1" dur="6s" repeatCount="indefinite" />
+              </linearGradient>
+
+              <mask id="fluid-mask-mobile">
+                <rect x="-5000%" y="-5000%" width="10000%" height="10000%" fill="white" />
+                <text x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="black" className="text-[220px] font-black uppercase tracking-tighter">WEB</text>
+                <text x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="black" className="text-[120px] font-black uppercase tracking-tighter">DEVELOPMENT</text>
+              </mask>
+            </defs>
+            
+            <rect x="-5000%" y="-5000%" width="10000%" height="10000%" fill="rgba(0, 0, 0, 0.80)" mask="url(#fluid-mask-mobile)" />
+            
+            <text x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="rgba(255, 255, 255, 0.03)" className="text-[220px] font-black uppercase tracking-tighter">WEB</text>
+            <text x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="rgba(255, 255, 255, 0.03)" className="text-[120px] font-black uppercase tracking-tighter">DEVELOPMENT</text>
+            
+            <text vectorEffect="non-scaling-stroke" x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" className="text-[220px] font-black uppercase tracking-tighter">WEB</text>
+            <text vectorEffect="non-scaling-stroke" x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" className="text-[120px] font-black uppercase tracking-tighter">DEVELOPMENT</text>
+
+            <text vectorEffect="non-scaling-stroke" x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="url(#neon-wave-mobile)" strokeWidth="3" className="text-[220px] font-black uppercase tracking-tighter" style={{ mixBlendMode: 'screen' }}>WEB</text>
+            <text vectorEffect="non-scaling-stroke" x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="url(#neon-wave-mobile)" strokeWidth="3" className="text-[120px] font-black uppercase tracking-tighter" style={{ mixBlendMode: 'screen' }}>DEVELOPMENT</text>
+          </motion.svg>
+
         </motion.div>
 
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 1 }}
-          className="absolute bottom-10 left-0 w-full flex justify-center z-20 mix-blend-difference"
+          transition={{ duration: 1, delay: 1.5 }}
+          className="absolute bottom-6 sm:bottom-10 px-4 left-0 w-full flex justify-center z-20 mix-blend-difference"
           style={{ opacity: useTransform(scrollYProgress, [0.8, 1], [0, 1]) }}
         >
           <p className="text-[10px] md:text-xs text-white uppercase tracking-widest text-center">
