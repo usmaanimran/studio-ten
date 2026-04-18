@@ -8,7 +8,7 @@ const LETTERS = "AB89!@#$%^&*()_+-=";
 
 const services = [
   { id: '01', title: 'Web Dev', slug: 'web-architecture', desc: 'High-performance digital systems built for scale.' },
-  { id: '02', title: 'Social Scaling', slug: 'social-scaling', desc: 'Aggressive growth strategies for the digital economy.' },
+  { id: '02', title: 'Social Media', slug: 'social-media', desc: 'Aggressive growth strategies for the digital economy.' },
   { id: '03', title: 'AI Automations', slug: 'ai-automations', desc: 'Agentic workflows and autonomous decision engines.' },
   { id: '04', title: 'Graphic & Brand Design', slug: 'graphic-brand-design', desc: 'Immersive visual identities that demand attention.' },
 ];
