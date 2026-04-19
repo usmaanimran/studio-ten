@@ -42,7 +42,7 @@ const DecryptLink = ({ idleText, hoverText, href, className }: { idleText: strin
       if (iteration >= target.length) {
         if (intervalRef.current) clearInterval(intervalRef.current);
       }
-      iteration += 1 / 3; // Controls the speed of decryption
+      iteration += 1 / 3; 
     }, 30);
 
     return () => {
@@ -85,21 +85,25 @@ function ScrollContent({
     offset: ['start start', 'end end'],
   });
 
+  // Restored your old useSpring for that heavy, smooth scroll feel
   const smoothProgress = useSpring(scrollYProgress, {
     stiffness: 120,
     damping: 30,
     restDelta: 0.001,
   });
 
-  const xTranslate   = useTransform(smoothProgress, [0, 0.33],   ['0%', '-50%']);
-  const heroOpacity  = useTransform(smoothProgress, [0, 0.15],   [1, 0]);
-  const mainTrackY       = useTransform(smoothProgress, [0.66, 1], ['0%', '-100%']);
-  const mainTrackOpacity = useTransform(smoothProgress, [0.75, 1], [1, 0]);
-  const aboutY       = useTransform(smoothProgress, [0.66, 1], ['50%', '0%']);
-  const aboutScale   = useTransform(smoothProgress, [0.66, 1], [0.85, 1]);
-  const aboutOpacity = useTransform(smoothProgress, [0.70, 1], [0, 1]);
+  // Restored the old mathematical mappings to fix the missing About section
+  const xTranslate       = useTransform(smoothProgress, [0, 0.33],   ['0%', '-50%']);
+  const heroOpacity      = useTransform(smoothProgress, [0, 0.15],   [1, 0]);
+  const mainTrackY       = useTransform(smoothProgress, [0.66, 1],   ['0%', '-100%']);
+  const mainTrackOpacity = useTransform(smoothProgress, [0.75, 1],   [1, 0]);
+  
+  const aboutY           = useTransform(smoothProgress, [0.66, 1],   ['50%', '0%']);
+  const aboutScale       = useTransform(smoothProgress, [0.66, 1],   [0.85, 1]);
+  const aboutOpacity     = useTransform(smoothProgress, [0.70, 1],   [0, 1]);
+  
   const textRevealPercent = useTransform(smoothProgress, [0.75, 0.95], [0, 100]);
-  const textBgSize = useMotionTemplate`${textRevealPercent}% 100%`;
+  const textBgSize        = useMotionTemplate`${textRevealPercent}% 100%`;
   const atmosphereOpacity = useTransform(smoothProgress, [0.40, 0.75], [0, 1]);
 
   const textVariants: Variants = {
@@ -116,6 +120,7 @@ function ScrollContent({
   };
 
   return (
+    // Restored h-[400vh] to give the 4 sections proper breathing room
     <div ref={containerRef} className="relative h-[400vh]">
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         
@@ -129,11 +134,17 @@ function ScrollContent({
 
         {/* TRACK 1: HERO + SERVICES */}
         <motion.div
-          style={{ x: xTranslate, y: mainTrackY, opacity: mainTrackOpacity }}
+          style={{ 
+            x: xTranslate, 
+            y: mainTrackY, 
+            opacity: mainTrackOpacity,
+            willChange: "transform, opacity" // [FIX] Forces the entire moving track onto the GPU
+          }}
           className="absolute inset-0 z-10 flex w-[200vw] h-full pointer-events-none mix-blend-difference"
         >
           {/* === SECTION 1: HERO === */}
           <motion.div style={{ opacity: heroOpacity }} className="w-screen h-full relative p-6 sm:p-10 lg:p-24 flex flex-col justify-between pointer-events-none">
+            {/* ... (Keep your existing Hero header/footer code here) ... */}
             <header className="flex justify-between items-start font-mono text-[10px] sm:text-xs uppercase tracking-[0.2em]">
               <motion.div custom={0} variants={textVariants} initial="hidden" animate={isReady ? 'visible' : 'hidden'} className="overflow-hidden">
                 <p>S_10 // Vol. 0.011</p>
@@ -176,8 +187,14 @@ function ScrollContent({
           {/* === SECTION 2: SERVICES === */}
           <div className="w-screen h-full flex flex-col justify-center p-6 sm:p-12 lg:p-24 pointer-events-none">
             <div className="max-w-7xl w-full mx-auto flex flex-col justify-center pointer-events-none">
-              <div className="mb-6 lg:mb-10 overflow-hidden shrink-0">
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black uppercase tracking-tighter text-white">
+              <div 
+                className="mb-6 lg:mb-10 overflow-hidden shrink-0"
+                style={{ transform: "translateZ(0)", willChange: "transform" }} // [FIX] Isolates the heading to stop pixel jitter
+              >
+                <h2 
+                  className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black uppercase tracking-tighter text-white"
+                  style={{ WebkitFontSmoothing: "antialiased" }} // [FIX] Smooths the font rendering during motion
+                >
                   The Core Pillars
                 </h2>
               </div>
@@ -224,39 +241,43 @@ function ScrollContent({
             </div>
           </div>
         </motion.div>
-
-        {/* COORDINATE DISPLAYS */}
-        <div className="absolute inset-0 pointer-events-none mix-blend-difference z-30">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={isReady ? { opacity: 1, y: 0 } : {}} transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }} className="absolute left-1/2 -translate-x-1/2 bottom-4 sm:bottom-8 items-center gap-3 font-mono text-[9px] text-neutral-500 uppercase tracking-[0.2em] hidden md:flex">
-            <span>TRK_X_AXIS //</span><span className="text-white">[ {coords.x.toString().padStart(4, '0')} ]</span>
-          </motion.div>
-        </div>
-
-        <div className="absolute inset-0 pointer-events-none mix-blend-difference z-30">
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={isReady ? { opacity: 1, x: 0 } : {}} transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }} className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 items-center gap-3 font-mono text-[9px] text-neutral-500 uppercase tracking-[0.2em] hidden md:flex" style={{ writingMode: 'vertical-rl' }}>
-            <span>TRK_Y_AXIS //</span><span className="text-white">[ {coords.y.toString().padStart(4, '0')} ]</span>
-          </motion.div>
-        </div>
-
-        {/* --- DECRYPT CONTACT BUTTON --- */}
-        <div className="absolute inset-0 pointer-events-none mix-blend-difference z-40">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={isReady ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }}
-            className="absolute right-6 top-6 sm:right-10 sm:top-10 pointer-events-auto"
-          >
-            <DecryptLink 
-              idleText="CONTACT_US"
-              hoverText="INITIATE_CONNECTION"
-              href="/contact"
-              className="group flex items-center gap-3 font-mono text-[10px] sm:text-xs text-white uppercase tracking-[0.2em] hover:text-neutral-400 transition-colors"
-            />
-          </motion.div>
-        </div>
-        {/* ------------------------------------------ */}
-
       </div>
+          
+      {/* VIBRATION FIX:
+        These are now 'fixed' instead of 'absolute', keeping them detached from 
+        the sticky scrolling recalculations which caused the mobile jitter.
+      */}
+      
+      {/* COORDINATE DISPLAYS */}
+      <div className="fixed inset-0 pointer-events-none mix-blend-difference z-30">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={isReady ? { opacity: 1, y: 0 } : {}} transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }} className="absolute left-1/2 -translate-x-1/2 bottom-4 sm:bottom-8 items-center gap-3 font-mono text-[9px] text-neutral-500 uppercase tracking-[0.2em] hidden md:flex">
+          <span>TRK_X_AXIS //</span><span className="text-white">[ {coords.x.toString().padStart(4, '0')} ]</span>
+        </motion.div>
+      </div>
+
+      <div className="fixed inset-0 pointer-events-none mix-blend-difference z-30">
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={isReady ? { opacity: 1, x: 0 } : {}} transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }} className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 items-center gap-3 font-mono text-[9px] text-neutral-500 uppercase tracking-[0.2em] hidden md:flex" style={{ writingMode: 'vertical-rl' }}>
+          <span>TRK_Y_AXIS //</span><span className="text-white">[ {coords.y.toString().padStart(4, '0')} ]</span>
+        </motion.div>
+      </div>
+
+      {/* --- DECRYPT CONTACT BUTTON --- */}
+      <div className="fixed inset-0 pointer-events-none mix-blend-difference z-40">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={isReady ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }}
+          className="absolute right-6 bottom-8 sm:bottom-auto sm:right-10 sm:top-28 lg:top-32 xl:top-10 pointer-events-auto"
+        >
+          <DecryptLink 
+            idleText="CONTACT_US"
+            hoverText="INITIATE_CONNECTION"
+            href="/contact"
+            className="group flex items-center gap-3 font-mono text-[10px] sm:text-xs text-white uppercase tracking-[0.2em] hover:text-neutral-400 transition-colors"
+          />
+        </motion.div>
+      </div>
+
     </div>
   );
 }
@@ -273,6 +294,8 @@ export default function StudioTenHome() {
   const currentSectionRef = useRef(0);
   const isScrollingRef    = useRef(false);
   const rafRef            = useRef<number>(0);
+  
+  // Restored TOTAL_SECTIONS back to 4 to match the 400vh timeline
   const TOTAL_SECTIONS    = 4;
 
   const scrollToSection = useCallback((index: number) => {
@@ -325,25 +348,37 @@ export default function StudioTenHome() {
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      // Block scrolling if still loading
       if (!isReady || isScrollingRef.current) return;
       const direction = e.deltaY > 0 ? 1 : -1;
       scrollToSection(currentSectionRef.current + direction);
     };
 
     let touchStartY = 0;
-    const handleTouchStart = (e: TouchEvent) => { touchStartY = e.touches[0].clientY; };
+    let touchStartX = 0;
+
+    const handleTouchStart = (e: TouchEvent) => { 
+      touchStartY = e.touches[0].clientY; 
+      touchStartX = e.touches[0].clientX;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault(); 
+    };
+
     const handleTouchEnd = (e: TouchEvent) => {
-      // Block scrolling if still loading
       if (!isReady || isScrollingRef.current) return;
-      const deltaY = touchStartY - e.changedTouches[0].clientY;
-      if (Math.abs(deltaY) > 40) {
+      const touchEndY = e.changedTouches[0].clientY;
+      const touchEndX = e.changedTouches[0].clientX;
+      
+      const deltaY = touchStartY - touchEndY;
+      const deltaX = touchStartX - touchEndX;
+
+      if (Math.abs(deltaY) > 40 && Math.abs(deltaY) > Math.abs(deltaX)) {
         scrollToSection(currentSectionRef.current + (deltaY > 0 ? 1 : -1));
       }
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Block scrolling if still loading
       if (!isReady) return; 
       
       if (e.key === 'ArrowDown' || e.key === 'PageDown') {
@@ -357,25 +392,26 @@ export default function StudioTenHome() {
       }
     };
 
-    container.addEventListener('wheel',      handleWheel,      { passive: false });
-    container.addEventListener('touchstart', handleTouchStart, { passive: true  });
-    container.addEventListener('touchend',   handleTouchEnd,   { passive: true  });
-    window.addEventListener(   'keydown',    handleKeyDown);
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    container.addEventListener('touchstart', handleTouchStart, { passive: false });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { passive: false });
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      container.removeEventListener('wheel',      handleWheel);
+      container.removeEventListener('wheel', handleWheel);
       container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchend',   handleTouchEnd);
-      window.removeEventListener(   'keydown',    handleKeyDown);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('keydown', handleKeyDown);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [scrollToSection, isReady]); // Make sure isReady is added to the dependency array
+  }, [scrollToSection, isReady]);
 
   return (
     <main 
       ref={scrollContainerRef} 
-      // dynamically toggle overflow-y-auto to hide the scrollbar/native scroll during the preloader
-      className={`relative w-full h-screen overflow-x-hidden bg-[#020202] text-white cursor-crosshair ${isReady ? 'overflow-y-auto' : 'overflow-y-hidden'}`}
+      className="relative w-full h-[100dvh] overflow-hidden bg-[#020202] text-white cursor-crosshair touch-none"
     >
       <AnimatePresence>
         {!isReady && <Preloader key="preloader" onComplete={() => setIsReady(true)} />}

@@ -43,10 +43,12 @@ function ParticleSwarm() {
   );
 }
 
+// Inside src/components/Atmosphere.tsx
 export default function Atmosphere() {
   return (
     <div className="absolute inset-0 -z-10 bg-[#050505]">
-      <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
+      {/* ADDED DPR PROP */}
+      <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 5], fov: 75 }}>
         <fog attach="fog" args={['#050505', 3, 10]} />
         <ParticleSwarm />
       </Canvas>

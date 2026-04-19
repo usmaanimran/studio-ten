@@ -189,7 +189,8 @@ function LiquidBlob({ isReady, mouseRef, scrollProgress }: LiquidBlobProps) {
 
   return (
     <mesh ref={meshRef}>
-      <icosahedronGeometry args={[1, 128]} />
+      {/* REDUCED FROM 128 TO 32. This saves ~150,000 vertex calculations per frame */}
+      <icosahedronGeometry args={[1, 32]} /> 
       <shaderMaterial
         ref={materialRef}
         vertexShader={vertexShader}
@@ -220,7 +221,8 @@ export default function FluidBackground({
 }: FluidBackgroundProps) {
   return (
     <div className="absolute inset-0 z-0 bg-[#020202]">
-      <Canvas camera={{ position: [0, 0, 4] }}>
+      {/* ADDED DPR PROP */}
+      <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 4] }}>
         <LiquidBlob isReady={isReady} mouseRef={mouseRef} scrollProgress={scrollProgress} />
       </Canvas>
     </div>
