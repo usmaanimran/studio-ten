@@ -15,7 +15,7 @@ const services = [
 
 export default function ServicesGrid() {
   const router = useRouter();
-  const [transitioningTo, setTransitioningTo] = useState<{slug: string, title: string} | null>(null);
+  const [transitioningTo, setTransitioningTo] = useState<{ slug: string, title: string } | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -34,7 +34,7 @@ export default function ServicesGrid() {
 
   useEffect(() => {
     if (isTouchDevice) return; // Don't track mouse on mobile
-    
+
     const handleMouseMove = (e: MouseEvent) => {
       mouseX.set(e.clientX - 45);
       mouseY.set(e.clientY - 45);
@@ -44,12 +44,12 @@ export default function ServicesGrid() {
   }, [mouseX, mouseY, isTouchDevice]);
 
   const handleNavigate = (slug: string, title: string) => {
-    if (transitioningTo) return; 
+    if (transitioningTo) return;
     setTransitioningTo({ slug, title });
-    
+
     setTimeout(() => {
       router.push(`/services/${slug}`);
-    }, 1200); 
+    }, 1200);
   };
 
   return (
@@ -58,23 +58,23 @@ export default function ServicesGrid() {
       {!isTouchDevice && isMounted && createPortal(
         <motion.div
           className="fixed top-0 left-0 pointer-events-none z-[99999] flex items-center justify-center rounded-full bg-white text-black font-black uppercase text-[10px] tracking-widest text-center leading-none"
-          style={{ 
-            width: 90, 
-            height: 90, 
-            x: springX, 
-            y: springY 
+          style={{
+            width: 90,
+            height: 90,
+            x: springX,
+            y: springY
           }}
           initial={{ scale: 0, opacity: 0 }}
           animate={{
             scale: hoveredId ? 1 : 0,
             opacity: hoveredId ? 1 : 0,
           }}
-          transition={{ 
-            scale: { type: "spring", stiffness: 300, damping: 20 }, 
-            opacity: { duration: 0.2 } 
+          transition={{
+            scale: { type: "spring", stiffness: 300, damping: 20 },
+            opacity: { duration: 0.2 }
           }}
         >
-          Click<br/>Me
+          Click<br />Me
         </motion.div>,
         document.body
       )}
@@ -100,7 +100,7 @@ export default function ServicesGrid() {
             >
               <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: [0, 1, 1, 0], scale: [0.9, 1, 1, 0.95] }}
@@ -120,10 +120,10 @@ export default function ServicesGrid() {
         )}
       </AnimatePresence>
 
-      <motion.section 
-        animate={{ 
+      <motion.section
+        animate={{
           x: transitioningTo ? "5vw" : "0vw",
-          scale: transitioningTo ? 0.98 : 1, 
+          scale: transitioningTo ? 0.98 : 1,
           filter: transitioningTo ? "blur(10px)" : "blur(0px)",
           opacity: transitioningTo ? 0 : 1
         }}
@@ -132,7 +132,7 @@ export default function ServicesGrid() {
         className="w-full grid grid-cols-1 sm:grid-cols-2 border-l border-t sm:border-t-0 border-white/10 pointer-events-auto relative z-10"
       >
         {services.map((service, index) => (
-          <ServiceCard 
+          <ServiceCard
             key={service.id}
             service={service}
             index={index}
@@ -157,14 +157,14 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
     onHoverStart();
     let iteration = 0;
     if (intervalRef.current) clearInterval(intervalRef.current);
-    
+
     intervalRef.current = setInterval(() => {
       setGlitchText(service.title.split("").map((letter: string, i: number) => {
         if (i < iteration) return service.title[i];
         if (letter === " ") return " ";
         return LETTERS[Math.floor(Math.random() * LETTERS.length)];
       }).join(""));
-      
+
       if (iteration >= service.title.length) {
         if (intervalRef.current) clearInterval(intervalRef.current);
       }
@@ -180,36 +180,41 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
   };
 
   return (
-    <motion.button 
+    <motion.button
       onClick={onClick}
       onMouseEnter={triggerScramble}
       onMouseLeave={handleMouseLeave}
       initial={{ opacity: 0, x: 20 }}
       whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true, amount: 0.1 }} // [FIX] 'once: true' prevents intersection observer from thrashing during scrolls
+      viewport={{ once: true, amount: 0.1 }}
       transition={{ delay: index * 0.1, duration: 0.5, ease: "easeOut" }}
-      whileHover={isTouchDevice ? {} : { 
+      whileHover={isTouchDevice ? {} : {
         x: [0, -3, 3, -2, 2, 0],
         y: [0, 2, -2, 1, -1, 0],
         transition: { duration: 0.3, ease: "linear" }
-      }} // [FIX] Disables the physical shake animation if on a touch device
+      }}
       style={{ willChange: "transform, opacity" }}
-      // @ts-ignore MOBILE OPTIMIZATION FIX: Responsive padding for small screens
-      className={`group relative text-left p-4 sm:p-6 lg:p-8 xl:p-12 border-b border-r border-white/10 flex flex-col justify-between transition-colors duration-300 min-h-[160px] lg:min-h-[220px] overflow-hidden ${isTouchDevice ? '' : 'cursor-none hover:bg-white'}`}
+      // FIX: Aggressively reduced padding and min-height for ultra-small mobile
+      className={`group relative text-left p-3 sm:p-6 lg:p-8 xl:p-12 border-b border-r border-white/10 flex flex-col justify-between transition-colors duration-300 min-h-[105px] sm:min-h-[160px] lg:min-h-[220px] overflow-hidden ${isTouchDevice ? '' : 'cursor-none hover:bg-white'}`}
     >
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-0 group-hover:opacity-10 mix-blend-overlay pointer-events-none" />
-      <div className="flex justify-between items-start mb-8 lg:mb-12 relative z-10">
-        <span className={`font-mono text-[10px] text-neutral-500 uppercase tracking-widest transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-black'}`}>
+
+      {/* FIX: Shrunk margin bottom and font size of the label */}
+      <div className="flex justify-between items-start mb-2 sm:mb-8 lg:mb-12 relative z-10">
+        <span className={`font-mono text-[9px] sm:text-[10px] text-neutral-500 uppercase tracking-widest transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-black'}`}>
           Service // {service.id}
         </span>
-        <div className={`w-2 h-2 rounded-full bg-white opacity-20 transition-all duration-300 shrink-0 ${isTouchDevice ? '' : 'group-hover:bg-black group-hover:opacity-100 group-hover:animate-ping'}`} />
+        <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white opacity-20 transition-all duration-300 shrink-0 ${isTouchDevice ? '' : 'group-hover:bg-black group-hover:opacity-100 group-hover:animate-ping'}`} />
       </div>
+
       <div className="mt-auto relative z-10">
-        {/* [MOBILE OPTIMIZATION FIX] Clamp typography for long words on narrow screens */}
-        <h3 className={`text-[clamp(1.5rem,7vw,2.5rem)] lg:text-4xl xl:text-5xl 2xl:text-6xl font-black uppercase tracking-tighter leading-[0.85] mb-3 break-words hyphens-auto transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-black'}`}>
+        {/* FIX: Lowered clamp floor to 1.15rem and reduced margin */}
+        <h3 className={`text-[clamp(1.15rem,6vw,2.5rem)] lg:text-4xl xl:text-5xl 2xl:text-6xl font-black uppercase tracking-tighter leading-[0.85] mb-1 sm:mb-3 break-words hyphens-auto transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-black'}`}>
           {glitchText}
         </h3>
-        <p className={`font-mono text-[9px] lg:text-[10px] uppercase tracking-[0.2em] text-neutral-400 max-w-xs leading-relaxed transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-neutral-800'}`}>
+
+        {/* FIX: Reduced mobile description text size and tracking to prevent awkward wraps */}
+        <p className={`font-mono text-[8px] sm:text-[9px] lg:text-[10px] uppercase tracking-[0.1em] sm:tracking-[0.2em] text-neutral-400 max-w-xs leading-tight sm:leading-relaxed transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-neutral-800'}`}>
           {service.desc}
         </p>
       </div>
