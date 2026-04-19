@@ -1,12 +1,43 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=";
 
 // ─────────────────────────────────────────────
-// DECRYPT RETURN LINK
+// DECRYPT ON MOUNT (PAGE LOAD EFFECT)
+// ─────────────────────────────────────────────
+const DecryptOnMount = ({ text, delay = 0, className = "" }: { text: string, delay?: number, className?: string }) => {
+  // Use regex to replace characters but PRESERVE spaces so the layout doesn't jump
+  const [displayText, setDisplayText] = useState(text.replace(/[^\s]/g, '█'));
+
+  useEffect(() => {
+    let timeout = setTimeout(() => {
+      let iteration = 0;
+      const interval = setInterval(() => {
+        setDisplayText(text.split("").map((l, i) => {
+          if (i < iteration) return text[i];
+          if (l === ' ') return ' ';
+          return LETTERS[Math.floor(Math.random() * LETTERS.length)];
+        }).join(""));
+
+        if (iteration >= text.length) {
+          clearInterval(interval);
+        }
+        iteration += 1 / 2; // Speed of decryption
+      }, 30);
+      return () => clearInterval(interval);
+    }, delay);
+
+    return () => clearTimeout(timeout);
+  }, [text, delay]);
+
+  return <span className={className}>{displayText}</span>;
+};
+
+// ─────────────────────────────────────────────
+// DECRYPT RETURN LINK (HOVER EFFECT)
 // ─────────────────────────────────────────────
 const DecryptReturnLink = ({ text, href }: { text: string, href: string }) => {
   const [displayText, setDisplayText] = useState(text);
@@ -67,95 +98,106 @@ export default function ContactTerminal() {
   };
 
   return (
-    <main className="min-h-screen w-full bg-[#020202] text-white font-mono p-6 sm:p-12 lg:p-24 flex flex-col justify-center cursor-crosshair">
+    // FIX 1: Removed `justify-center` to stop the top from being cut off on small desktop heights.
+    // We handle vertical centering safely below.
+    <main className="min-h-[100dvh] w-full bg-[#020202] text-white font-mono p-6 sm:p-12 lg:p-24 flex flex-col overflow-y-auto cursor-crosshair">
       
       <DecryptReturnLink text="SYS_RETURN" href="/" />
 
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="max-w-3xl w-full mx-auto"
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        // FIX 2: `my-auto` vertically centers the content, but allows normal scrolling if it overflows
+        className="max-w-3xl w-full mx-auto my-auto pt-24 pb-12"
       >
-        <div className="mb-12 border-b border-white/20 pb-8">
-          <h1 className="text-2xl sm:text-4xl font-black uppercase tracking-tighter mb-2">
-            Secure Terminal_
+        <div className="mb-12 sm:mb-16 border-b border-white/10 pb-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter mb-4">
+            <DecryptOnMount text="Secure Terminal_" delay={200} />
           </h1>
-          <p className="text-[10px] sm:text-xs text-neutral-500 uppercase tracking-widest">
-            Establishing encrypted connection to Studio Ten node...
+          <p className="text-[10px] sm:text-xs text-neutral-500 uppercase tracking-widest leading-relaxed">
+            <DecryptOnMount text="Establishing encrypted connection to Studio Ten node..." delay={800} />
           </p>
         </div>
 
         {status === 'SUCCESS' ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-green-500 flex flex-col gap-4">
-            <p>[OK] TRANSMISSION RECEIVED.</p>
-            <p>Our autonomous units will process your data and respond shortly.</p>
-            <button onClick={() => setStatus('IDLE')} className="text-left mt-8 text-neutral-500 hover:text-white uppercase text-xs tracking-widest">
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="text-green-500 flex flex-col gap-4 border border-green-500/20 bg-green-500/5 p-8">
+            <p className="uppercase tracking-widest text-sm">[OK] TRANSMISSION RECEIVED.</p>
+            <p className="text-xs text-green-500/70 leading-relaxed">Our autonomous units will process your data and respond shortly.</p>
+            <button onClick={() => setStatus('IDLE')} className="text-left mt-8 text-neutral-500 hover:text-white uppercase text-xs tracking-widest transition-colors">
               [ INITIATE_NEW_CONNECTION ]
             </button>
           </motion.div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-8 relative z-10">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-8 sm:gap-10 relative z-10">
+            
             {/* NAME INPUT */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 group">
-              <label htmlFor="name" className="text-neutral-500 text-xs sm:text-sm whitespace-nowrap">
-                root@studio-ten:~# <span className="text-white">set_designation</span>
+            <div className="flex flex-col group">
+              <label htmlFor="name" className="text-[10px] sm:text-xs md:text-sm font-mono tracking-widest mb-3 whitespace-nowrap">
+                <DecryptOnMount text="root@studio-ten:~#" delay={1200} className="text-neutral-500" /> <span className="text-white"><DecryptOnMount text="set_designation" delay={1800} /></span>
               </label>
-              <input id="name" type="text" required disabled={status === 'TRANSMITTING'} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="bg-transparent border-none outline-none text-white w-full placeholder:text-neutral-700 focus:ring-0 focus:border-b focus:border-white/50 py-1" placeholder="[ Enter your name ]" />
+              {/* FIX 3: Replaced the side indent with a pure console layout style */}
+              <div className="flex items-center gap-3 sm:gap-4">
+                <span className="text-neutral-600 font-bold select-none text-sm sm:text-base">{'>'}</span>
+                <input id="name" type="text" required disabled={status === 'TRANSMITTING'} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="bg-transparent border-b border-white/20 focus:border-white outline-none text-white w-full pb-2 placeholder:text-neutral-800 transition-colors rounded-none font-mono text-sm sm:text-base" placeholder="[ Enter your name ]" />
+              </div>
             </div>
 
             {/* EMAIL INPUT */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 group">
-              <label htmlFor="email" className="text-neutral-500 text-xs sm:text-sm whitespace-nowrap">
-                root@studio-ten:~# <span className="text-white">set_protocol</span>
+            <div className="flex flex-col group">
+              <label htmlFor="email" className="text-[10px] sm:text-xs md:text-sm font-mono tracking-widest mb-3 whitespace-nowrap">
+                <DecryptOnMount text="root@studio-ten:~#" delay={1400} className="text-neutral-500" /> <span className="text-white"><DecryptOnMount text="set_protocol" delay={2000} /></span>
               </label>
-              <input id="email" type="email" required disabled={status === 'TRANSMITTING'} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="bg-transparent border-none outline-none text-white w-full placeholder:text-neutral-700 focus:ring-0 focus:border-b focus:border-white/50 py-1" placeholder="[ Enter your email address ]" />
+              <div className="flex items-center gap-3 sm:gap-4">
+                <span className="text-neutral-600 font-bold select-none text-sm sm:text-base">{'>'}</span>
+                <input id="email" type="email" required disabled={status === 'TRANSMITTING'} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="bg-transparent border-b border-white/20 focus:border-white outline-none text-white w-full pb-2 placeholder:text-neutral-800 transition-colors rounded-none font-mono text-sm sm:text-base" placeholder="[ Enter your email address ]" />
+              </div>
             </div>
 
             {/* PHONE INPUT */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 group">
-              <label htmlFor="phone" className="text-neutral-500 text-xs sm:text-sm whitespace-nowrap">
-                root@studio-ten:~# <span className="text-white">set_comlink</span>
+            <div className="flex flex-col group">
+              <label htmlFor="phone" className="text-[10px] sm:text-xs md:text-sm font-mono tracking-widest mb-3 whitespace-nowrap">
+                <DecryptOnMount text="root@studio-ten:~#" delay={1600} className="text-neutral-500" /> <span className="text-white"><DecryptOnMount text="set_comlink" delay={2200} /></span>
               </label>
-              <input id="phone" type="tel" disabled={status === 'TRANSMITTING'} value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="bg-transparent border-none outline-none text-white w-full placeholder:text-neutral-700 focus:ring-0 focus:border-b focus:border-white/50 py-1" placeholder="[ Enter your contact number ]" />
+              <div className="flex items-center gap-3 sm:gap-4">
+                <span className="text-neutral-600 font-bold select-none text-sm sm:text-base">{'>'}</span>
+                <input id="phone" type="tel" disabled={status === 'TRANSMITTING'} value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="bg-transparent border-b border-white/20 focus:border-white outline-none text-white w-full pb-2 placeholder:text-neutral-800 transition-colors rounded-none font-mono text-sm sm:text-base" placeholder="[ Enter your contact number ]" />
+              </div>
             </div>
 
             {/* MESSAGE INPUT */}
-            <div className="flex flex-col gap-2 group">
-              <label htmlFor="message" className="text-neutral-500 text-xs sm:text-sm">
-                root@studio-ten:~# <span className="text-white">load_payload</span>
+            <div className="flex flex-col group">
+              <label htmlFor="message" className="text-[10px] sm:text-xs md:text-sm font-mono tracking-widest mb-3">
+                <DecryptOnMount text="root@studio-ten:~#" delay={1800} className="text-neutral-500" /> <span className="text-white"><DecryptOnMount text="load_payload" delay={2400} /></span>
               </label>
-              <textarea id="message" required disabled={status === 'TRANSMITTING'} rows={6} value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} className="bg-white/5 border border-white/10 outline-none text-white w-full p-4 placeholder:text-neutral-700 focus:border-white/50 resize-none font-mono text-sm" placeholder="> Type your requirements here..." />
+              <div className="flex items-start gap-3 sm:gap-4">
+                <span className="text-neutral-600 font-bold select-none text-sm sm:text-base mt-2 sm:mt-3">{'>'}</span>
+                <textarea id="message" required disabled={status === 'TRANSMITTING'} rows={5} value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} className="bg-white/[0.02] border border-white/10 focus:border-white/40 outline-none text-white w-full p-3 sm:p-4 placeholder:text-neutral-800 transition-colors rounded-none font-mono text-sm sm:text-base resize-y min-h-[120px]" placeholder="Type your requirements here..." />
+              </div>
             </div>
 
             {/* STATUS / SUBMIT */}
-            <div className="mt-4 flex items-center gap-6">
+            <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 pt-4 border-t border-white/10">
               
-              {/* SICK EXECUTE BUTTON */}
+              <div className="hidden sm:block text-neutral-500 text-xs md:text-sm font-mono">
+                root@studio-ten:~#
+              </div>
+
               <motion.button 
                 type="submit" 
                 disabled={status === 'TRANSMITTING'}
-                whileHover={status !== 'TRANSMITTING' ? { 
-                  backgroundColor: "#ffffff", 
-                  color: "#000000",
-                  letterSpacing: "0.4em",
-                  boxShadow: "0px 0px 20px rgba(255, 255, 255, 0.4)"
-                } : {}}
-                whileTap={status !== 'TRANSMITTING' ? {
-                  scale: 0.95,
-                  x: [0, -5, 5, -5, 5, 0], // The "Glitch Shake"
-                  transition: { duration: 0.3 }
-                } : {}}
-                className="relative overflow-hidden uppercase tracking-[0.2em] text-xs font-bold border border-white px-8 py-3 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none group"
+                whileTap={status !== 'TRANSMITTING' ? { scale: 0.98 } : {}}
+                className="relative overflow-hidden uppercase tracking-[0.2em] text-xs font-bold border border-white px-8 py-4 sm:py-3 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none group w-full sm:w-auto text-center bg-[#020202]"
               >
-                <span className="relative z-10">{status === 'TRANSMITTING' ? './transmitting...' : './execute'}</span>
+                <span className="relative z-10 group-hover:text-black transition-colors duration-300">
+                  {status === 'TRANSMITTING' ? './transmitting...' : './execute'}
+                </span>
                 
-                {/* Background sliding scanline effect */}
-                <div className="absolute inset-0 bg-neutral-200 translate-y-[100%] group-hover:translate-y-[-100%] transition-transform duration-[1.5s] ease-in-out z-0 opacity-20" />
+                <div className="absolute inset-0 bg-white translate-y-[100%] group-hover:translate-y-0 transition-transform duration-300 ease-in-out z-0" />
               </motion.button>
               
               {status === 'ERROR' && (
-                <span className="text-red-500 text-xs uppercase tracking-widest animate-pulse">
+                <span className="text-red-500 text-[10px] sm:text-xs uppercase tracking-widest animate-pulse w-full text-center sm:text-left mt-2 sm:mt-0">
                   [!] TRANSMISSION_FAILED
                 </span>
               )}
