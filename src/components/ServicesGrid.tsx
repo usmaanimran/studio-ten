@@ -152,9 +152,8 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
   const [glitchText, setGlitchText] = useState(service.title);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const triggerScramble = () => {
-    if (isTouchDevice) return; // Prevent scramble triggering on mobile tap/scroll
-    onHoverStart();
+  // Extracted the scramble logic into its own reusable function
+  const startScramble = () => {
     let iteration = 0;
     if (intervalRef.current) clearInterval(intervalRef.current);
 
@@ -172,6 +171,12 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
     }, 30);
   };
 
+  const triggerScramble = () => {
+    if (isTouchDevice) return; // Prevent hover triggers on mobile
+    onHoverStart();
+    startScramble();
+  };
+
   const handleMouseLeave = () => {
     if (isTouchDevice) return;
     onHoverEnd();
@@ -179,9 +184,17 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
     setGlitchText(service.title);
   };
 
+  // NEW: Handle the physical tap/click
+  const handleInteraction = (e: React.MouseEvent) => {
+    if (isTouchDevice) {
+      startScramble(); // Fire the decrypt effect instantly on tap
+    }
+    onClick(); // Call the parent navigation function
+  };
+
   return (
     <motion.button
-      onClick={onClick}
+      onClick={handleInteraction} // <-- Pointed to our new handler
       onMouseEnter={triggerScramble}
       onMouseLeave={handleMouseLeave}
       initial={{ opacity: 0, x: 20 }}
@@ -194,12 +207,10 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
         transition: { duration: 0.3, ease: "linear" }
       }}
       style={{ willChange: "transform, opacity" }}
-      // FIX: Aggressively reduced padding and min-height for ultra-small mobile
       className={`group relative text-left p-3 sm:p-6 lg:p-8 xl:p-12 border-b border-r border-white/10 flex flex-col justify-between transition-colors duration-300 min-h-[105px] sm:min-h-[160px] lg:min-h-[220px] overflow-hidden ${isTouchDevice ? '' : 'cursor-none hover:bg-white'}`}
     >
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-0 group-hover:opacity-10 mix-blend-overlay pointer-events-none" />
 
-      {/* FIX: Shrunk margin bottom and font size of the label */}
       <div className="flex justify-between items-start mb-2 sm:mb-8 lg:mb-12 relative z-10">
         <span className={`font-mono text-[9px] sm:text-[10px] text-neutral-500 uppercase tracking-widest transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-black'}`}>
           Service // {service.id}
@@ -208,15 +219,21 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
       </div>
 
       <div className="mt-auto relative z-10">
-        {/* FIX: Lowered clamp floor to 1.15rem and reduced margin */}
         <h3 className={`text-[clamp(1.15rem,6vw,2.5rem)] lg:text-4xl xl:text-5xl 2xl:text-6xl font-black uppercase tracking-tighter leading-[0.85] mb-1 sm:mb-3 break-words hyphens-auto transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-black'}`}>
           {glitchText}
         </h3>
 
-        {/* FIX: Reduced mobile description text size and tracking to prevent awkward wraps */}
         <p className={`font-mono text-[8px] sm:text-[9px] lg:text-[10px] uppercase tracking-[0.1em] sm:tracking-[0.2em] text-neutral-400 max-w-xs leading-tight sm:leading-relaxed transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-neutral-800'}`}>
           {service.desc}
         </p>
+
+        {/* NEW: Mobile Touch Indicator */}
+        {isTouchDevice && (
+          <div className="mt-3 sm:mt-4 flex items-center gap-2 font-mono text-[9px] sm:text-[10px] text-white/40 uppercase tracking-widest">
+            <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse" />
+            [ Tap To Initiate ]
+          </div>
+        )}
       </div>
     </motion.button>
   );

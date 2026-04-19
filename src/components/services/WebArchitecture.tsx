@@ -19,11 +19,12 @@ function NativeFluidCanvas() {
       canvas.height = canvas.clientHeight;
 
       const config = {
-        TEXTURE_DOWNSAMPLE: 1,
+        // Drop resolution slightly if on a smaller screen to keep 60fps
+        TEXTURE_DOWNSAMPLE: window.innerWidth < 768 ? 2 : 1, 
         DENSITY_DISSIPATION: 0.965,
         VELOCITY_DISSIPATION: 0.98,
         PRESSURE_DISSIPATION: 0.8,
-        PRESSURE_ITERATIONS: 20,
+        PRESSURE_ITERATIONS: window.innerWidth < 768 ? 10 : 20, // Lower physics iterations for mobile
         CURL: 18, 
         SPLAT_RADIUS: 0.004, 
       };
@@ -732,7 +733,7 @@ export default function WebArchitecturePage() {
     // We wait 2100ms so the heavy WebGL compilation doesn't freeze the text animation.
     const timer = setTimeout(() => {
       setMountCanvas(true);
-    }, 2100); 
+    }, 100); 
     
     return () => clearTimeout(timer);
   }, []);
@@ -781,7 +782,8 @@ export default function WebArchitecturePage() {
       <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden pointer-events-none">
         
         <div className="absolute inset-0 z-0 bg-black pointer-events-auto">
-           {mountCanvas && !isMobile && (
+           {/* Fix: Removed !isMobile check so the canvas mounts on touch screens too */}
+           {mountCanvas && (
              <motion.div 
                initial={{ opacity: 0 }} 
                animate={{ opacity: 1 }} 
