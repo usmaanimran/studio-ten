@@ -206,13 +206,13 @@ function ScrollContent({
         </motion.div>
 
         {/* TRACK 2: ABOUT */}
-        <motion.div style={{ y: aboutY, scale: aboutScale, opacity: aboutOpacity }} className="absolute inset-0 z-20 flex flex-col justify-center p-6 sm:p-12 lg:p-24 pointer-events-none mix-blend-difference">
+        <motion.div style={{ y: aboutY, scale: aboutScale, opacity: aboutOpacity }} className="absolute inset-0 z-20 flex flex-col justify-start md:justify-center overflow-y-auto md:overflow-visible pt-24 md:pt-0 p-6 sm:p-12 lg:p-24 pointer-events-none mix-blend-difference">
           <div className="max-w-[90rem] mx-auto w-full flex flex-col lg:flex-row gap-10 md:gap-14 lg:gap-24 items-start justify-between">
             <div className="w-full lg:w-1/2 flex flex-col gap-4 md:gap-6 shrink-0 relative">
               <span className="font-mono text-[10px] text-neutral-500 uppercase tracking-[0.3em] block">
                 [ CRAFTED WITH INTENTION // STUDIO_TEN ]
               </span>
-              <h2 className="text-[14vw] md:text-[11vw] lg:text-[7vw] font-black uppercase leading-[0.8] tracking-tighter text-white break-words">
+              <h2 className="text-[12vw] md:text-[11vw] lg:text-[7vw] font-black uppercase leading-[0.8] tracking-tighter text-white break-words">
                 STUDIO<br /><span className="text-neutral-500">TEN.</span> 
               </h2>
             </div>
@@ -227,7 +227,7 @@ function ScrollContent({
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "#525252",
                 }}
-                className="text-base sm:text-lg md:text-xl lg:text-2xl font-medium leading-relaxed tracking-tight"
+                className="text-sm sm:text-base md:text-xl lg:text-2xl font-medium leading-relaxed tracking-tight"
               >
                 Founded in 2026, Studio Ten was born with a singular vision: to bridge the gap between raw, brutalist design and next-generation agentic intelligence. We operate as a high-performance architectural node, working 1-to-1 with our clients to dive deep into their operational ecosystems. 
                 <br /><br />
@@ -357,15 +357,18 @@ export default function StudioTenHome() {
     let touchStartX = 0;
 
     const handleTouchStart = (e: TouchEvent) => { 
+      if (window.matchMedia("(max-width: 768px)").matches) return;
       touchStartY = e.touches[0].clientY; 
       touchStartX = e.touches[0].clientX;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
+      if (window.matchMedia("(max-width: 768px)").matches) return;
       e.preventDefault(); 
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
+      if (window.matchMedia("(max-width: 768px)").matches) return;
       if (!isReady || isScrollingRef.current) return;
       const touchEndY = e.changedTouches[0].clientY;
       const touchEndX = e.changedTouches[0].clientX;
@@ -411,7 +414,7 @@ export default function StudioTenHome() {
   return (
     <main 
       ref={scrollContainerRef} 
-      className="relative w-full h-[100dvh] overflow-hidden bg-[#020202] text-white cursor-crosshair touch-none"
+      className="relative w-full h-[100dvh] overflow-hidden bg-[#020202] text-white cursor-crosshair touch-auto md:touch-none"
     >
       <AnimatePresence>
         {!isReady && <Preloader key="preloader" onComplete={() => setIsReady(true)} />}

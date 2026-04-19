@@ -723,8 +723,10 @@ export default function WebArchitecturePage() {
   const scale = useTransform(scrollYProgress, [0, 1], [80, 1]);
   
   const [mountCanvas, setMountCanvas] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    setIsMobile(window.matchMedia('(max-width: 768px)').matches);
     // INCREASE THIS DELAY: 
     // The text transition takes 1.9s (1.5s duration + 0.4s delay). 
     // We wait 2100ms so the heavy WebGL compilation doesn't freeze the text animation.
@@ -779,7 +781,7 @@ export default function WebArchitecturePage() {
       <div className="fixed inset-0 w-full h-screen overflow-hidden pointer-events-none">
         
         <div className="absolute inset-0 z-0 bg-black pointer-events-auto">
-           {mountCanvas && (
+           {mountCanvas && !isMobile && (
              <motion.div 
                initial={{ opacity: 0 }} 
                animate={{ opacity: 1 }} 

@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { MotionValue, useMotionValueEvent } from 'framer-motion';
@@ -219,10 +219,16 @@ export default function FluidBackground({
   mouseRef,
   scrollProgress,
 }: FluidBackgroundProps) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.matchMedia('(max-width: 768px)').matches);
+  }, []);
+
   return (
     <div className="absolute inset-0 z-0 bg-[#020202]">
       {/* ADDED DPR PROP */}
-      <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 4] }}>
+      <Canvas dpr={isMobile ? 1 : [1, 1.5]} camera={{ position: [0, 0, 4] }}>
         <LiquidBlob isReady={isReady} mouseRef={mouseRef} scrollProgress={scrollProgress} />
       </Canvas>
     </div>

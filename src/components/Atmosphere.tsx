@@ -1,15 +1,20 @@
 'use client';
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Points, PointMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 
 function ParticleSwarm() {
   const ref = useRef<THREE.Points>(null!);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.matchMedia('(max-width: 768px)').matches);
+  }, []);
   
   // Generate random particles in a spherical distribution
   const positions = useMemo(() => {
-    const count = 3000;
+    const count = isMobile ? 800 : 3000;
     const positions = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       const r = 10 * Math.cbrt(Math.random());
@@ -45,10 +50,16 @@ function ParticleSwarm() {
 
 // Inside src/components/Atmosphere.tsx
 export default function Atmosphere() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.matchMedia('(max-width: 768px)').matches);
+  }, []);
+
   return (
     <div className="absolute inset-0 -z-10 bg-[#050505]">
       {/* ADDED DPR PROP */}
-      <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 5], fov: 75 }}>
+      <Canvas dpr={isMobile ? 1 : [1, 1.5]} camera={{ position: [0, 0, 5], fov: 75 }}>
         <fog attach="fog" args={['#050505', 3, 10]} />
         <ParticleSwarm />
       </Canvas>
