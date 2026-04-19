@@ -836,6 +836,7 @@ export default function WebArchitecturePage() {
             <text vectorEffect="non-scaling-stroke" x="50%" y="80%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="url(#neon-wave)" strokeWidth="3" className="text-[120px] font-black uppercase tracking-tighter" style={{ mixBlendMode: 'screen' }}>DEVELOPMENT</text>
           </motion.svg>
 
+          {/* MOBILE SVG BLOCK */}
           <motion.svg 
             viewBox="0 0 1600 800" 
             style={{ scale, transformOrigin: "50% 50%" }}
@@ -853,21 +854,22 @@ export default function WebArchitecturePage() {
 
               <mask id="fluid-mask-mobile">
                 <rect x="-5000%" y="-5000%" width="10000%" height="10000%" fill="white" />
-                <text x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="black" fontSize="480" className="font-black uppercase tracking-tighter">WEB</text>
-                <text x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="black" fontSize="150" className="font-black uppercase tracking-tighter">DEVELOPMENT</text>
+                {/* AAA FIX: Reduced font size and pushed the Y-coordinates apart so they don't overlap */}
+                <text x="50%" y="38%" textAnchor="middle" dominantBaseline="middle" fill="black" fontSize="400" className="font-black uppercase tracking-tighter">WEB</text>
+                <text x="50%" y="74%" textAnchor="middle" dominantBaseline="middle" fill="black" fontSize="120" className="font-black uppercase tracking-tighter">DEVELOPMENT</text>
               </mask>
             </defs>
             
             <rect x="-5000%" y="-5000%" width="10000%" height="10000%" fill="rgba(0, 0, 0, 0.80)" mask="url(#fluid-mask-mobile)" />
             
-            <text x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="rgba(255, 255, 255, 0.03)" fontSize="480" className="font-black uppercase tracking-tighter">WEB</text>
-            <text x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="rgba(255, 255, 255, 0.03)" fontSize="150" className="font-black uppercase tracking-tighter">DEVELOPMENT</text>
+            <text x="50%" y="38%" textAnchor="middle" dominantBaseline="middle" fill="rgba(255, 255, 255, 0.03)" fontSize="400" className="font-black uppercase tracking-tighter">WEB</text>
+            <text x="50%" y="74%" textAnchor="middle" dominantBaseline="middle" fill="rgba(255, 255, 255, 0.03)" fontSize="120" className="font-black uppercase tracking-tighter">DEVELOPMENT</text>
             
-            <text vectorEffect="non-scaling-stroke" x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" fontSize="480" className="font-black uppercase tracking-tighter">WEB</text>
-            <text vectorEffect="non-scaling-stroke" x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" fontSize="150" className="font-black uppercase tracking-tighter">DEVELOPMENT</text>
+            <text vectorEffect="non-scaling-stroke" x="50%" y="38%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" fontSize="400" className="font-black uppercase tracking-tighter">WEB</text>
+            <text vectorEffect="non-scaling-stroke" x="50%" y="74%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" fontSize="120" className="font-black uppercase tracking-tighter">DEVELOPMENT</text>
 
-            <text vectorEffect="non-scaling-stroke" x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="url(#neon-wave-mobile)" strokeWidth="3" fontSize="480" className="font-black uppercase tracking-tighter" style={{ mixBlendMode: 'screen' }}>WEB</text>
-            <text vectorEffect="non-scaling-stroke" x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="url(#neon-wave-mobile)" strokeWidth="3" fontSize="150" className="font-black uppercase tracking-tighter" style={{ mixBlendMode: 'screen' }}>DEVELOPMENT</text>
+            <text vectorEffect="non-scaling-stroke" x="50%" y="38%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="url(#neon-wave-mobile)" strokeWidth="3" fontSize="400" className="font-black uppercase tracking-tighter" style={{ mixBlendMode: 'screen' }}>WEB</text>
+            <text vectorEffect="non-scaling-stroke" x="50%" y="74%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="url(#neon-wave-mobile)" strokeWidth="3" fontSize="120" className="font-black uppercase tracking-tighter" style={{ mixBlendMode: 'screen' }}>DEVELOPMENT</text>
           </motion.svg>
 
         </motion.div>
