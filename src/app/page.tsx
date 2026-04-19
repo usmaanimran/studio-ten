@@ -26,11 +26,11 @@ const DecryptLink = ({ idleText, hoverText, href, className }: { idleText: strin
   useEffect(() => {
     let iteration = 0;
     const target = isHovered ? hoverText : idleText;
-    
+
     if (intervalRef.current) clearInterval(intervalRef.current);
 
     intervalRef.current = setInterval(() => {
-      setText((prev) => 
+      setText((prev) =>
         target.split("").map((letter, index) => {
           if (index < iteration) return target[index];
           return LETTERS[Math.floor(Math.random() * LETTERS.length)];
@@ -40,7 +40,7 @@ const DecryptLink = ({ idleText, hoverText, href, className }: { idleText: strin
       if (iteration >= target.length) {
         if (intervalRef.current) clearInterval(intervalRef.current);
       }
-      iteration += 1 / 3; 
+      iteration += 1 / 3;
     }, 30);
 
     return () => {
@@ -49,10 +49,10 @@ const DecryptLink = ({ idleText, hoverText, href, className }: { idleText: strin
   }, [isHovered, idleText, hoverText]);
 
   return (
-    <Link 
-      href={href} 
-      onMouseEnter={() => setIsHovered(true)} 
-      onMouseLeave={() => setIsHovered(false)} 
+    <Link
+      href={href}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={className}
     >
       <span className="w-2 h-2 bg-white rounded-full group-hover:bg-neutral-400 transition-colors animate-pulse shrink-0" />
@@ -85,26 +85,27 @@ function ScrollContent({
     offset: ['start start', 'end end'],
   });
 
-  // [INDUSTRY FIX] 
-  // Mobile: Stiff & instant so it sticks exactly to the user's finger (no lag).
+  // [MOBILE OPTIMIZATION FIX] 
+  // Mobile: Raw scrollYProgress so it tracks 1:1 with hardware touch (zero lag).
   // Desktop: Smooth, cinematic lagging spring.
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: isMobile ? 1000 : 120,
-    damping: isMobile ? 100 : 30,
+  const springProgress = useSpring(scrollYProgress, {
+    stiffness: 120,
+    damping: 30,
     restDelta: 0.001,
   });
+  const smoothProgress = isMobile ? scrollYProgress : springProgress;
 
-  const xTranslate       = useTransform(smoothProgress, [0, 0.33],   ['0%', '-50%']);
-  const heroOpacity      = useTransform(smoothProgress, [0, 0.15],   [1, 0]);
-  const mainTrackY       = useTransform(smoothProgress, [0.66, 1],   ['0%', '-100%']);
-  const mainTrackOpacity = useTransform(smoothProgress, [0.75, 1],   [1, 0]);
-  
-  const aboutY           = useTransform(smoothProgress, [0.66, 1],   ['50%', '0%']);
-  const aboutScale       = useTransform(smoothProgress, [0.66, 1],   [0.85, 1]);
-  const aboutOpacity     = useTransform(smoothProgress, [0.70, 1],   [0, 1]);
-  
+  const xTranslate = useTransform(smoothProgress, [0, 0.33], ['0%', '-50%']);
+  const heroOpacity = useTransform(smoothProgress, [0, 0.15], [1, 0]);
+  const mainTrackY = useTransform(smoothProgress, [0.66, 1], ['0%', '-100%']);
+  const mainTrackOpacity = useTransform(smoothProgress, [0.75, 1], [1, 0]);
+
+  const aboutY = useTransform(smoothProgress, [0.66, 1], ['50%', '0%']);
+  const aboutScale = useTransform(smoothProgress, [0.66, 1], [0.85, 1]);
+  const aboutOpacity = useTransform(smoothProgress, [0.70, 1], [0, 1]);
+
   const textRevealPercent = useTransform(smoothProgress, [0.75, 0.95], [0, 100]);
-  const textBgSize        = useMotionTemplate`${textRevealPercent}% 100%`;
+  const textBgSize = useMotionTemplate`${textRevealPercent}% 100%`;
   const atmosphereOpacity = useTransform(smoothProgress, [0.40, 0.75], [0, 1]);
 
   const textVariants: Variants = {
@@ -124,7 +125,7 @@ function ScrollContent({
     // Changed 400vh to 400dvh for proper mobile browser rendering
     <div ref={containerRef} className="relative h-[400dvh]">
       <div className="sticky top-0 h-[100dvh] w-full overflow-hidden">
-        
+
         <div className="absolute inset-0 z-0 pointer-events-none">
           <FluidBackground isReady={isReady} mouseRef={mouseCoordsRef} scrollProgress={smoothProgress} />
         </div>
@@ -139,12 +140,12 @@ function ScrollContent({
           className="absolute inset-0 z-10 flex w-[200vw] h-full pointer-events-none mix-blend-difference"
         >
           {/* === SECTION 1: HERO === */}
-          <motion.div style={{ opacity: heroOpacity }} className="w-screen h-full relative p-6 sm:p-10 lg:p-24 flex flex-col justify-between pointer-events-none">
+          <motion.div style={{ opacity: heroOpacity }} className="w-screen h-full relative px-4 py-8 sm:px-6 sm:py-10 lg:p-24 flex flex-col justify-between pointer-events-none">
             <header className="flex justify-between items-start font-mono text-[10px] sm:text-xs uppercase tracking-[0.2em]">
               <motion.div custom={0} variants={textVariants} initial="hidden" animate={isReady ? 'visible' : 'hidden'} className="overflow-hidden">
                 <p>S_10 // Vol. 0.011</p>
               </motion.div>
-              <motion.div custom={1} variants={textVariants} initial="hidden" animate={isReady ? 'visible' : 'hidden'} className="overflow-hidden text-right">
+              <motion.div custom={1} variants={textVariants} initial="hidden" animate={isReady ? 'visible' : 'hidden'} className="overflow-hidden text-right hidden sm:block">
                 <p>Shall We?</p>
                 <p className="text-neutral-500 mt-1">LK — Global</p>
               </motion.div>
@@ -180,10 +181,11 @@ function ScrollContent({
           </motion.div>
 
           {/* === SECTION 2: SERVICES === */}
-          <div className="w-screen h-full flex flex-col justify-center p-6 sm:p-12 lg:p-24 pointer-events-none">
+          <div className="w-screen h-full flex flex-col justify-center px-4 py-8 sm:px-6 sm:py-12 lg:p-24 pointer-events-none">
             <div className="max-w-7xl w-full mx-auto flex flex-col justify-center pointer-events-none">
               <div className="mb-6 lg:mb-10 overflow-hidden shrink-0" style={{ transform: "translateZ(0)", willChange: "transform" }}>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black uppercase tracking-tighter text-white" style={{ WebkitFontSmoothing: "antialiased" }}>
+                {/* [MOBILE OPTIMIZATION FIX] Fluid typography for extreme small screens */}
+                <h2 className="text-[clamp(1.75rem,8vw,3rem)] lg:text-5xl xl:text-6xl font-black uppercase tracking-tighter text-white hyphens-auto break-words leading-[0.85]" style={{ WebkitFontSmoothing: "antialiased" }}>
                   The Core Pillars
                 </h2>
               </div>
@@ -195,20 +197,20 @@ function ScrollContent({
         </motion.div>
 
         {/* TRACK 2: ABOUT */}
-        <motion.div style={{ y: aboutY, scale: aboutScale, opacity: aboutOpacity }} className="absolute inset-0 z-20 flex flex-col justify-start md:justify-center overflow-y-auto md:overflow-visible pt-24 md:pt-0 p-6 sm:p-12 lg:p-24 pointer-events-none mix-blend-difference">
+        <motion.div style={{ y: aboutY, scale: aboutScale, opacity: aboutOpacity }} className="absolute inset-0 z-20 flex flex-col justify-start md:justify-center overflow-y-auto md:overflow-visible pt-24 md:pt-0 px-4 pb-8 sm:px-6 sm:pb-12 lg:p-24 pointer-events-none mix-blend-difference">
           <div className="max-w-[90rem] mx-auto w-full flex flex-col lg:flex-row gap-10 md:gap-14 lg:gap-24 items-start justify-between">
             <div className="w-full lg:w-1/2 flex flex-col gap-4 md:gap-6 shrink-0 relative">
               <span className="font-mono text-[10px] text-neutral-500 uppercase tracking-[0.3em] block">
                 [ CRAFTED WITH INTENTION // STUDIO_TEN ]
               </span>
               <h2 className="text-[12vw] md:text-[11vw] lg:text-[7vw] font-black uppercase leading-[0.8] tracking-tighter text-white break-words">
-                STUDIO<br /><span className="text-neutral-500">TEN.</span> 
+                STUDIO<br /><span className="text-neutral-500">TEN.</span>
               </h2>
             </div>
 
             <div className="w-full lg:w-1/2 flex flex-col gap-6 md:gap-8 pt-2 md:pt-6 lg:pt-24 relative max-w-2xl lg:max-w-3xl">
               <div className="w-12 h-[2px] bg-white/20" />
-              <motion.p 
+              <motion.p
                 style={{
                   backgroundImage: "linear-gradient(90deg, #ffffff, #ffffff)",
                   backgroundSize: textBgSize,
@@ -218,11 +220,11 @@ function ScrollContent({
                 }}
                 className="text-sm sm:text-base md:text-xl lg:text-2xl font-medium leading-relaxed tracking-tight"
               >
-                Founded in 2026, Studio Ten was born with a singular vision: to bridge the gap between raw, brutalist design and next-generation agentic intelligence. We operate as a high-performance architectural node, working 1-to-1 with our clients to dive deep into their operational ecosystems. 
+                Founded in 2026, Studio Ten was born with a singular vision: to bridge the gap between raw, brutalist design and next-generation agentic intelligence. We operate as a high-performance architectural node, working 1-to-1 with our clients to dive deep into their operational ecosystems.
                 <br /><br />
                 By identifying systemic bottlenecks and uncovering hidden friction, we don't just build interfaces—we engineer bespoke digital realities and autonomous decision engines tailored to solve your most complex challenges at scale.
               </motion.p>
-              
+
               <div className="grid grid-cols-2 gap-4 mt-2 md:mt-6 border-t border-white/10 pt-6 md:pt-8 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
                 <div><span className="block text-white mb-1">Status</span><span>Active // Online</span></div>
                 <div><span className="block text-white mb-1">Objective</span><span>System Domination</span></div>
@@ -231,16 +233,9 @@ function ScrollContent({
           </div>
         </motion.div>
       </div>
-      
-      {/* [INDUSTRY FIX] INVISIBLE NATIVE SNAP POINTS FOR MOBILE
-          This grants hardware-accelerated scroll snapping without JS calculations. 
-          It only turns on when "snap-y" is active on the parent wrapper! */}
-      <div className="absolute top-0 left-0 w-full h-[400dvh] pointer-events-none flex flex-col z-0">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className={`h-[100dvh] w-full ${isMobile ? 'snap-start snap-always' : ''}`} />
-        ))}
-      </div>
-          
+
+      {/* [MOBILE TOUCH FIX] Removed invisible native snap points to eliminate compositor/JS thread fighting */}
+
       {/* COORDINATE DISPLAYS */}
       <div className="fixed inset-0 pointer-events-none mix-blend-difference z-30">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={isReady ? { opacity: 1, y: 0 } : {}} transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }} className="absolute left-1/2 -translate-x-1/2 bottom-4 sm:bottom-8 items-center gap-3 font-mono text-[9px] text-neutral-500 uppercase tracking-[0.2em] hidden md:flex">
@@ -260,9 +255,10 @@ function ScrollContent({
           initial={{ opacity: 0, y: -20 }}
           animate={isReady ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }}
-          className="absolute right-6 bottom-8 sm:bottom-auto sm:right-10 sm:top-28 lg:top-32 xl:top-10 pointer-events-auto"
+          // @ts-ignore MOBILE OPTIMIZATION FIX: Moved Contact button to safe zone on mobile (top-right)
+          className="absolute top-6 right-6 sm:bottom-auto sm:right-10 sm:top-28 lg:top-32 xl:top-10 pointer-events-auto"
         >
-          <DecryptLink 
+          <DecryptLink
             idleText="CONTACT_US"
             hoverText="INITIATE_CONNECTION"
             href="/contact"
@@ -285,9 +281,9 @@ export default function StudioTenHome() {
   const mouseCoordsRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const currentSectionRef = useRef(0);
-  const isScrollingRef    = useRef(false);
-  const rafRef            = useRef<number>(0);
-  const TOTAL_SECTIONS    = 4;
+  const isScrollingRef = useRef(false);
+  const rafRef = useRef<number>(0);
+  const TOTAL_SECTIONS = 4;
 
   // [INDUSTRY FIX] Check if device uses touch or is a small screen
   useEffect(() => {
@@ -307,27 +303,27 @@ export default function StudioTenHome() {
     if (clamped === currentSectionRef.current && isScrollingRef.current) return;
 
     currentSectionRef.current = clamped;
-    isScrollingRef.current    = true;
+    isScrollingRef.current = true;
 
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
-    const startValue  = container.scrollTop;
+    const startValue = container.scrollTop;
     // Changed to clientHeight which handles mobile dVH height much better
     const targetValue = clamped * container.clientHeight;
-    const duration    = 950; 
-    const startTime   = performance.now();
+    const duration = 950;
+    const startTime = performance.now();
 
     const step = (now: number) => {
-      const elapsed  = now - startTime;
-      const t        = Math.min(elapsed / duration, 1);
-      const eased    = easeOutQuint(t);
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      const eased = easeOutQuint(t);
 
       container.scrollTop = startValue + (targetValue - startValue) * eased;
 
       if (t < 1) {
         rafRef.current = requestAnimationFrame(step);
       } else {
-        container.scrollTop   = targetValue;
+        container.scrollTop = targetValue;
         isScrollingRef.current = false;
       }
     };
@@ -349,14 +345,66 @@ export default function StudioTenHome() {
     if (!container) return;
 
     const handleWheel = (e: WheelEvent) => {
-      // [INDUSTRY FIX] If it's a mobile device/tablet, DO NOT hijack the scroll wheel.
-      // Let the native hardware engine handle the momentum and snapping.
-      if (isMobile) return; 
-
-      e.preventDefault();
+      // [MOBILE TOUCH FIX] We now control both desktop wheel and mobile touch momentum natively via JS.
+      // e.preventDefault is safe because we map everything to our 1:1 scrollToSection logic.
+      if (e.cancelable) e.preventDefault();
+      
       if (!isReady || isScrollingRef.current) return;
       const direction = e.deltaY > 0 ? 1 : -1;
       scrollToSection(currentSectionRef.current + direction);
+    };
+
+    // --- MOBILE TOUCH SWIPE LOGIC ---
+    let touchStartY = 0;
+    let touchStartSection = 0;
+    const SWIPE_THRESHOLD = 40;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (!isMobile) return;
+      touchStartY = e.touches[0].clientY;
+      touchStartSection = currentSectionRef.current;
+      
+      // Instantly unlock scroll and halt animations so UI instantly tracks the hardware touch
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        isScrollingRef.current = false;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isMobile) return;
+      
+      // CRITICAL: Prevent native scroll (and native inertia) to stop compositor thread fighting
+      if (e.cancelable) e.preventDefault();
+
+      if (!isScrollingRef.current && isReady) {
+        const container = scrollContainerRef.current;
+        if (container) {
+           const currentY = e.touches[0].clientY;
+           const delta = touchStartY - currentY;
+           const expectedScroll = (touchStartSection * container.clientHeight) + delta;
+           
+           // Apply 1:1 touch tracking instantly without spring delay
+           container.scrollTop = Math.max(0, Math.min(container.scrollHeight - container.clientHeight, expectedScroll));
+        }
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!isMobile || !isReady || isScrollingRef.current) return;
+      
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaY = touchStartY - touchEndY;
+
+      // Predict section jump off intended swipe vector
+      let targetSection = touchStartSection;
+      if (deltaY > SWIPE_THRESHOLD && touchStartSection < TOTAL_SECTIONS - 1) {
+        targetSection += 1;
+      } else if (deltaY < -SWIPE_THRESHOLD && touchStartSection > 0) {
+        targetSection -= 1;
+      }
+
+      scrollToSection(targetSection);
     };
 
     const handleNativeScroll = () => {
@@ -367,8 +415,8 @@ export default function StudioTenHome() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Allow native scroll jumps if on mobile
-      if (!isReady || isMobile) return; 
-      
+      if (!isReady || isMobile) return;
+
       if (e.key === 'ArrowDown' || e.key === 'PageDown') {
         e.preventDefault();
         if (isScrollingRef.current) return;
@@ -382,22 +430,29 @@ export default function StudioTenHome() {
 
     container.addEventListener('wheel', handleWheel, { passive: false });
     container.addEventListener('scroll', handleNativeScroll, { passive: true });
+    // [MOBILE TOUCH FIX] Binding passive: false is vital to intercept the native composite scroll
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       container.removeEventListener('wheel', handleWheel);
       container.removeEventListener('scroll', handleNativeScroll);
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('keydown', handleKeyDown);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [scrollToSection, isReady, isMobile]);
 
   return (
-    <main 
-      ref={scrollContainerRef} 
-      // [INDUSTRY FIX] We conditionally apply `snap-y snap-mandatory` ONLY on mobile. 
-      // This grants perfect scroll snapping without interfering with the JS Desktop setup.
-      className={`relative w-full h-[100dvh] overflow-y-auto overflow-x-hidden bg-[#020202] text-white cursor-crosshair touch-auto ${isMobile ? 'snap-y snap-mandatory' : ''}`}
+    <main
+      ref={scrollContainerRef}
+      // [MOBILE TOUCH FIX] Eliminated native CSS scroll snapping. We now use 1:1 JS tracking to prevent compositor thread fighting, 
+      // while enforcing touch-action: pan-y / none via touch-none on mobile so double-tap zoom delays are erased.
+      className={`relative w-full h-[100dvh] overflow-y-auto overflow-x-hidden bg-[#020202] text-white cursor-crosshair ${isMobile ? 'touch-none' : 'touch-auto'}`}
     >
       <AnimatePresence>
         {!isReady && <Preloader key="preloader" onComplete={() => setIsReady(true)} />}

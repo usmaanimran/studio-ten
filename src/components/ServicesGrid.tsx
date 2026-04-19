@@ -194,7 +194,8 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
         transition: { duration: 0.3, ease: "linear" }
       }} // [FIX] Disables the physical shake animation if on a touch device
       style={{ willChange: "transform, opacity" }}
-      className={`group relative text-left p-6 lg:p-8 xl:p-12 border-b border-r border-white/10 flex flex-col justify-between transition-colors duration-300 min-h-[160px] lg:min-h-[220px] overflow-hidden ${isTouchDevice ? '' : 'cursor-none hover:bg-white'}`}
+      // @ts-ignore MOBILE OPTIMIZATION FIX: Responsive padding for small screens
+      className={`group relative text-left p-4 sm:p-6 lg:p-8 xl:p-12 border-b border-r border-white/10 flex flex-col justify-between transition-colors duration-300 min-h-[160px] lg:min-h-[220px] overflow-hidden ${isTouchDevice ? '' : 'cursor-none hover:bg-white'}`}
     >
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-0 group-hover:opacity-10 mix-blend-overlay pointer-events-none" />
       <div className="flex justify-between items-start mb-8 lg:mb-12 relative z-10">
@@ -204,7 +205,8 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
         <div className={`w-2 h-2 rounded-full bg-white opacity-20 transition-all duration-300 shrink-0 ${isTouchDevice ? '' : 'group-hover:bg-black group-hover:opacity-100 group-hover:animate-ping'}`} />
       </div>
       <div className="mt-auto relative z-10">
-        <h3 className={`text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-black uppercase tracking-tighter leading-[0.85] mb-3 transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-black'}`}>
+        {/* [MOBILE OPTIMIZATION FIX] Clamp typography for long words on narrow screens */}
+        <h3 className={`text-[clamp(1.5rem,7vw,2.5rem)] lg:text-4xl xl:text-5xl 2xl:text-6xl font-black uppercase tracking-tighter leading-[0.85] mb-3 break-words hyphens-auto transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-black'}`}>
           {glitchText}
         </h3>
         <p className={`font-mono text-[9px] lg:text-[10px] uppercase tracking-[0.2em] text-neutral-400 max-w-xs leading-relaxed transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-neutral-800'}`}>

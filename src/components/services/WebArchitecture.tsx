@@ -739,7 +739,7 @@ export default function WebArchitecturePage() {
 
   return (
     
-    <main ref={containerRef} className="h-[300vh] w-full bg-[#020202] cursor-crosshair">
+    <main ref={containerRef} className="h-[300dvh] w-full bg-[#020202] cursor-crosshair">
       <div className="fixed inset-0 z-[9999] pointer-events-none overflow-hidden flex items-center justify-center">
         <svg className="absolute w-0 h-0">
           <defs>
@@ -778,7 +778,7 @@ export default function WebArchitecturePage() {
         </Link>
       </motion.div>
 
-      <div className="fixed inset-0 w-full h-screen overflow-hidden pointer-events-none">
+      <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden pointer-events-none">
         
         <div className="absolute inset-0 z-0 bg-black pointer-events-auto">
            {mountCanvas && !isMobile && (
@@ -835,7 +835,7 @@ export default function WebArchitecturePage() {
           </motion.svg>
 
           <motion.svg 
-            viewBox="0 0 1000 800" 
+            viewBox="0 0 1600 800" 
             style={{ scale, transformOrigin: "50% 50%" }}
             className="block md:hidden w-[95vw] overflow-visible"
           >
@@ -851,21 +851,21 @@ export default function WebArchitecturePage() {
 
               <mask id="fluid-mask-mobile">
                 <rect x="-5000%" y="-5000%" width="10000%" height="10000%" fill="white" />
-                <text x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="black" className="text-[220px] font-black uppercase tracking-tighter">WEB</text>
-                <text x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="black" className="text-[120px] font-black uppercase tracking-tighter">DEVELOPMENT</text>
+                <text x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="black" fontSize="480" className="font-black uppercase tracking-tighter">WEB</text>
+                <text x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="black" fontSize="150" className="font-black uppercase tracking-tighter">DEVELOPMENT</text>
               </mask>
             </defs>
             
             <rect x="-5000%" y="-5000%" width="10000%" height="10000%" fill="rgba(0, 0, 0, 0.80)" mask="url(#fluid-mask-mobile)" />
             
-            <text x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="rgba(255, 255, 255, 0.03)" className="text-[220px] font-black uppercase tracking-tighter">WEB</text>
-            <text x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="rgba(255, 255, 255, 0.03)" className="text-[120px] font-black uppercase tracking-tighter">DEVELOPMENT</text>
+            <text x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="rgba(255, 255, 255, 0.03)" fontSize="480" className="font-black uppercase tracking-tighter">WEB</text>
+            <text x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="rgba(255, 255, 255, 0.03)" fontSize="150" className="font-black uppercase tracking-tighter">DEVELOPMENT</text>
             
-            <text vectorEffect="non-scaling-stroke" x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" className="text-[220px] font-black uppercase tracking-tighter">WEB</text>
-            <text vectorEffect="non-scaling-stroke" x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" className="text-[120px] font-black uppercase tracking-tighter">DEVELOPMENT</text>
+            <text vectorEffect="non-scaling-stroke" x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" fontSize="480" className="font-black uppercase tracking-tighter">WEB</text>
+            <text vectorEffect="non-scaling-stroke" x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="2" fontSize="150" className="font-black uppercase tracking-tighter">DEVELOPMENT</text>
 
-            <text vectorEffect="non-scaling-stroke" x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="url(#neon-wave-mobile)" strokeWidth="3" className="text-[220px] font-black uppercase tracking-tighter" style={{ mixBlendMode: 'screen' }}>WEB</text>
-            <text vectorEffect="non-scaling-stroke" x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="url(#neon-wave-mobile)" strokeWidth="3" className="text-[120px] font-black uppercase tracking-tighter" style={{ mixBlendMode: 'screen' }}>DEVELOPMENT</text>
+            <text vectorEffect="non-scaling-stroke" x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="url(#neon-wave-mobile)" strokeWidth="3" fontSize="480" className="font-black uppercase tracking-tighter" style={{ mixBlendMode: 'screen' }}>WEB</text>
+            <text vectorEffect="non-scaling-stroke" x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="none" stroke="url(#neon-wave-mobile)" strokeWidth="3" fontSize="150" className="font-black uppercase tracking-tighter" style={{ mixBlendMode: 'screen' }}>DEVELOPMENT</text>
           </motion.svg>
 
         </motion.div>
