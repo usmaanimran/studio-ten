@@ -124,9 +124,10 @@ function ScrollContent({
     <div ref={containerRef} className="relative h-[400vh]">
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         
-        <div className="absolute inset-0 z-0">
-          <FluidBackground isReady={isReady} mouseRef={mouseCoordsRef} scrollProgress={smoothProgress} />
-        </div>
+         
+<div className="absolute inset-0 z-0 pointer-events-none">
+  <FluidBackground isReady={isReady} mouseRef={mouseCoordsRef} scrollProgress={smoothProgress} />
+</div>
 
         <motion.div style={{ opacity: atmosphereOpacity }} className="absolute inset-0 z-[1] pointer-events-none">
           <Atmosphere />
@@ -342,6 +343,8 @@ export default function StudioTenHome() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // Inside src/app/page.tsx -> StudioTenHome component
+
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -353,32 +356,11 @@ export default function StudioTenHome() {
       scrollToSection(currentSectionRef.current + direction);
     };
 
-    let touchStartY = 0;
-    let touchStartX = 0;
-
-    const handleTouchStart = (e: TouchEvent) => { 
-      if (window.matchMedia("(max-width: 768px)").matches) return;
-      touchStartY = e.touches[0].clientY; 
-      touchStartX = e.touches[0].clientX;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (window.matchMedia("(max-width: 768px)").matches) return;
-      e.preventDefault(); 
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (window.matchMedia("(max-width: 768px)").matches) return;
-      if (!isReady || isScrollingRef.current) return;
-      const touchEndY = e.changedTouches[0].clientY;
-      const touchEndX = e.changedTouches[0].clientX;
-      
-      const deltaY = touchStartY - touchEndY;
-      const deltaX = touchStartX - touchEndX;
-
-      if (Math.abs(deltaY) > 40 && Math.abs(deltaY) > Math.abs(deltaX)) {
-        scrollToSection(currentSectionRef.current + (deltaY > 0 ? 1 : -1));
-      }
+    // FIX 1: Keep track of native scrolling so the mouse wheel 'snapping' stays in sync 
+    // after a user touches and pans.
+    const handleNativeScroll = () => {
+      if (isScrollingRef.current) return;
+      currentSectionRef.current = Math.round(container.scrollTop / window.innerHeight);
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -395,17 +377,14 @@ export default function StudioTenHome() {
       }
     };
 
+    // FIX 2: Removed touchstart, touchmove, touchend event listeners completely
     container.addEventListener('wheel', handleWheel, { passive: false });
-    container.addEventListener('touchstart', handleTouchStart, { passive: false });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd, { passive: false });
+    container.addEventListener('scroll', handleNativeScroll, { passive: true });
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       container.removeEventListener('wheel', handleWheel);
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
+      container.removeEventListener('scroll', handleNativeScroll);
       window.removeEventListener('keydown', handleKeyDown);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
@@ -414,7 +393,8 @@ export default function StudioTenHome() {
   return (
     <main 
       ref={scrollContainerRef} 
-      className="relative w-full h-[100dvh] overflow-hidden bg-[#020202] text-white cursor-crosshair touch-auto md:touch-none"
+      // FIX 3: Removed 'md:touch-none' so touch screens can natively pan and scroll
+      className="relative w-full h-[100dvh] overflow-y-auto overflow-x-hidden bg-[#020202] text-white cursor-crosshair touch-auto"
     >
       <AnimatePresence>
         {!isReady && <Preloader key="preloader" onComplete={() => setIsReady(true)} />}

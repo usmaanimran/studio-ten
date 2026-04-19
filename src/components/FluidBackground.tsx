@@ -214,6 +214,7 @@ interface FluidBackgroundProps {
   scrollProgress: MotionValue<number>;
 }
 
+ 
 export default function FluidBackground({
   isReady = true,
   mouseRef,
@@ -226,8 +227,8 @@ export default function FluidBackground({
   }, []);
 
   return (
-    <div className="absolute inset-0 z-0 bg-[#020202]">
-      {/* ADDED DPR PROP */}
+    // FIX: Added 'pointer-events-none' so the canvas doesn't steal touches
+    <div className="absolute inset-0 z-0 bg-[#020202] pointer-events-none">
       <Canvas dpr={isMobile ? 1 : [1, 1.5]} camera={{ position: [0, 0, 4] }}>
         <LiquidBlob isReady={isReady} mouseRef={mouseRef} scrollProgress={scrollProgress} />
       </Canvas>
