@@ -85,9 +85,6 @@ function ScrollContent({
     offset: ['start start', 'end end'],
   });
 
-  // [MOBILE OPTIMIZATION FIX] 
-  // Mobile: Raw scrollYProgress so it tracks 1:1 with hardware touch (zero lag).
-  // Desktop: Smooth, cinematic lagging spring.
   const springProgress = useSpring(scrollYProgress, {
     stiffness: 120,
     damping: 30,
@@ -122,7 +119,6 @@ function ScrollContent({
   };
 
   return (
-    // Changed 400vh to 400dvh for proper mobile browser rendering
     <div ref={containerRef} className="relative h-[400dvh]">
       <div className="sticky top-0 h-[100dvh] w-full overflow-hidden">
 
@@ -140,7 +136,7 @@ function ScrollContent({
           className="absolute inset-0 z-10 flex w-[200vw] h-full pointer-events-none mix-blend-difference"
         >
           {/* === SECTION 1: HERO === */}
-          <motion.div style={{ opacity: heroOpacity }} className="w-screen h-full relative px-4 py-8 sm:px-6 sm:py-10 lg:p-24 flex flex-col justify-between pointer-events-none">
+          <motion.div style={{ opacity: heroOpacity }} className="w-screen h-full relative px-4 py-8 pb-24 sm:px-6 sm:pb-32 lg:p-24 flex flex-col justify-between pointer-events-none">
             <header className="flex justify-between items-start font-mono text-[10px] sm:text-xs uppercase tracking-[0.2em]">
               <motion.div custom={0} variants={textVariants} initial="hidden" animate={isReady ? 'visible' : 'hidden'} className="overflow-hidden">
                 <p>S_10 // Vol. 0.011</p>
@@ -164,7 +160,7 @@ function ScrollContent({
               </div>
             </div>
 
-            <footer className="grid grid-cols-2 md:grid-cols-3 gap-8 items-end border-t border-white/20 pt-8 mt-12">
+            <footer className="grid grid-cols-2 md:grid-cols-3 gap-8 items-end border-t border-white/20 pt-8 mt-12 relative z-20">
               <div className="hidden md:block" />
               <motion.div custom={4} variants={textVariants} initial="hidden" animate={isReady ? 'visible' : 'hidden'} className="overflow-hidden">
                 <p className="font-mono text-[10px] sm:text-xs uppercase tracking-widest text-left md:text-center">Built For Change</p>
@@ -184,7 +180,6 @@ function ScrollContent({
           <div className="w-screen h-full flex flex-col justify-center px-4 py-8 sm:px-6 sm:py-12 lg:p-24 pointer-events-none">
             <div className="max-w-7xl w-full mx-auto flex flex-col justify-center pointer-events-none">
               <div className="mb-6 lg:mb-10 overflow-hidden shrink-0" style={{ transform: "translateZ(0)", willChange: "transform" }}>
-                {/* [MOBILE OPTIMIZATION FIX] Fluid typography for extreme small screens */}
                 <h2 className="text-[clamp(1.75rem,8vw,3rem)] lg:text-5xl xl:text-6xl font-black uppercase tracking-tighter text-white hyphens-auto break-words leading-[0.85]" style={{ WebkitFontSmoothing: "antialiased" }}>
                   The Core Pillars
                 </h2>
@@ -234,17 +229,16 @@ function ScrollContent({
         </motion.div>
       </div>
 
-      {/* [MOBILE TOUCH FIX] Removed invisible native snap points to eliminate compositor/JS thread fighting */}
-
       {/* COORDINATE DISPLAYS */}
+      {/* [AAA FIX] Added 'hidden md:flex' back. Trackers are now hidden on mobile but active on tablet+ */}
       <div className="fixed inset-0 pointer-events-none mix-blend-difference z-30">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={isReady ? { opacity: 1, y: 0 } : {}} transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }} className="absolute left-1/2 -translate-x-1/2 bottom-4 sm:bottom-8 items-center gap-3 font-mono text-[9px] text-neutral-500 uppercase tracking-[0.2em] hidden md:flex">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={isReady ? { opacity: 1, y: 0 } : {}} transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }} className="absolute left-1/2 -translate-x-1/2 bottom-4 sm:bottom-8 hidden md:flex items-center gap-2 sm:gap-3 font-mono text-[8px] sm:text-[9px] text-neutral-500 uppercase tracking-[0.2em]">
           <span>TRK_X_AXIS //</span><span className="text-white">[ {coords.x.toString().padStart(4, '0')} ]</span>
         </motion.div>
       </div>
 
       <div className="fixed inset-0 pointer-events-none mix-blend-difference z-30">
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={isReady ? { opacity: 1, x: 0 } : {}} transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }} className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 items-center gap-3 font-mono text-[9px] text-neutral-500 uppercase tracking-[0.2em] hidden md:flex" style={{ writingMode: 'vertical-rl' }}>
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={isReady ? { opacity: 1, x: 0 } : {}} transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }} className="absolute right-3 sm:right-8 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-2 sm:gap-3 font-mono text-[8px] sm:text-[9px] text-neutral-500 uppercase tracking-[0.2em]" style={{ writingMode: 'vertical-rl' }}>
           <span>TRK_Y_AXIS //</span><span className="text-white">[ {coords.y.toString().padStart(4, '0')} ]</span>
         </motion.div>
       </div>
@@ -255,8 +249,9 @@ function ScrollContent({
           initial={{ opacity: 0, y: -20 }}
           animate={isReady ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }}
-          // @ts-ignore MOBILE OPTIMIZATION FIX: Moved Contact button to safe zone on mobile (top-right)
-          className="absolute top-6 right-6 sm:bottom-auto sm:right-10 sm:top-28 lg:top-32 xl:top-10 pointer-events-auto"
+          // [AAA FIX] Pinned to the bottom-right for touch ergonomics and to clear the header text.
+          // It only snaps back to the top-right on xl (1280px+) desktop displays.
+          className="absolute bottom-6 right-6 md:bottom-8 md:right-8 xl:bottom-auto xl:top-10 xl:right-10 pointer-events-auto"
         >
           <DecryptLink
             idleText="CONTACT_US"
@@ -285,7 +280,6 @@ export default function StudioTenHome() {
   const rafRef = useRef<number>(0);
   const TOTAL_SECTIONS = 4;
 
-  // [INDUSTRY FIX] Check if device uses touch or is a small screen
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.matchMedia("(max-width: 768px)").matches || window.matchMedia("(pointer: coarse)").matches);
@@ -308,7 +302,6 @@ export default function StudioTenHome() {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
     const startValue = container.scrollTop;
-    // Changed to clientHeight which handles mobile dVH height much better
     const targetValue = clamped * container.clientHeight;
     const duration = 950;
     const startTime = performance.now();
@@ -332,12 +325,28 @@ export default function StudioTenHome() {
   }, []);
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setCoords({ x: e.clientX, y: e.clientY });
-      mouseCoordsRef.current = { x: e.clientX, y: e.clientY };
+    const updateCoords = (clientX: number, clientY: number) => {
+      setCoords({ x: Math.round(clientX), y: Math.round(clientY) });
+      mouseCoordsRef.current = { x: clientX, y: clientY };
     };
+
+    const handleMouseMove = (e: MouseEvent) => updateCoords(e.clientX, e.clientY);
+    
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        updateCoords(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchstart', handleTouchMove, { passive: true });
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchstart', handleTouchMove);
+    };
   }, []);
 
   useEffect(() => {
@@ -345,16 +354,12 @@ export default function StudioTenHome() {
     if (!container) return;
 
     const handleWheel = (e: WheelEvent) => {
-      // [MOBILE TOUCH FIX] We now control both desktop wheel and mobile touch momentum natively via JS.
-      // e.preventDefault is safe because we map everything to our 1:1 scrollToSection logic.
       if (e.cancelable) e.preventDefault();
-      
       if (!isReady || isScrollingRef.current) return;
       const direction = e.deltaY > 0 ? 1 : -1;
       scrollToSection(currentSectionRef.current + direction);
     };
 
-    // --- MOBILE TOUCH SWIPE LOGIC ---
     let touchStartY = 0;
     let touchStartSection = 0;
     const SWIPE_THRESHOLD = 40;
@@ -364,27 +369,21 @@ export default function StudioTenHome() {
       touchStartY = e.touches[0].clientY;
       touchStartSection = currentSectionRef.current;
       
-      // Instantly unlock scroll and halt animations so UI instantly tracks the hardware touch
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
         isScrollingRef.current = false;
       }
     };
 
-    const handleTouchMove = (e: TouchEvent) => {
+    const handleTouchMoveScroll = (e: TouchEvent) => {
       if (!isMobile) return;
-      
-      // CRITICAL: Prevent native scroll (and native inertia) to stop compositor thread fighting
       if (e.cancelable) e.preventDefault();
 
       if (!isScrollingRef.current && isReady) {
-        const container = scrollContainerRef.current;
         if (container) {
            const currentY = e.touches[0].clientY;
            const delta = touchStartY - currentY;
            const expectedScroll = (touchStartSection * container.clientHeight) + delta;
-           
-           // Apply 1:1 touch tracking instantly without spring delay
            container.scrollTop = Math.max(0, Math.min(container.scrollHeight - container.clientHeight, expectedScroll));
         }
       }
@@ -396,7 +395,6 @@ export default function StudioTenHome() {
       const touchEndY = e.changedTouches[0].clientY;
       const deltaY = touchStartY - touchEndY;
 
-      // Predict section jump off intended swipe vector
       let targetSection = touchStartSection;
       if (deltaY > SWIPE_THRESHOLD && touchStartSection < TOTAL_SECTIONS - 1) {
         targetSection += 1;
@@ -409,12 +407,10 @@ export default function StudioTenHome() {
 
     const handleNativeScroll = () => {
       if (isScrollingRef.current) return;
-      // Replaced window.innerHeight with container.clientHeight for better mobile accuracy
       currentSectionRef.current = Math.round(container.scrollTop / container.clientHeight);
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Allow native scroll jumps if on mobile
       if (!isReady || isMobile) return;
 
       if (e.key === 'ArrowDown' || e.key === 'PageDown') {
@@ -430,9 +426,8 @@ export default function StudioTenHome() {
 
     container.addEventListener('wheel', handleWheel, { passive: false });
     container.addEventListener('scroll', handleNativeScroll, { passive: true });
-    // [MOBILE TOUCH FIX] Binding passive: false is vital to intercept the native composite scroll
     container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchmove', handleTouchMoveScroll, { passive: false });
     container.addEventListener('touchend', handleTouchEnd, { passive: true });
     window.addEventListener('keydown', handleKeyDown);
 
@@ -440,7 +435,7 @@ export default function StudioTenHome() {
       container.removeEventListener('wheel', handleWheel);
       container.removeEventListener('scroll', handleNativeScroll);
       container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchmove', handleTouchMoveScroll);
       container.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('keydown', handleKeyDown);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -450,8 +445,6 @@ export default function StudioTenHome() {
   return (
     <main
       ref={scrollContainerRef}
-      // [MOBILE TOUCH FIX] Eliminated native CSS scroll snapping. We now use 1:1 JS tracking to prevent compositor thread fighting, 
-      // while enforcing touch-action: pan-y / none via touch-none on mobile so double-tap zoom delays are erased.
       className={`relative w-full h-[100dvh] overflow-y-auto overflow-x-hidden bg-[#020202] text-white cursor-crosshair ${isMobile ? 'touch-none' : 'touch-auto'}`}
     >
       <AnimatePresence>

@@ -730,7 +730,7 @@ export default function WebArchitecturePage() {
     setIsMobile(window.matchMedia('(max-width: 768px)').matches);
     // INCREASE THIS DELAY: 
     // The text transition takes 1.9s (1.5s duration + 0.4s delay). 
-    // We wait 2100ms so the heavy WebGL compilation doesn't freeze the text animation.
+    // We wait 100ms so the heavy WebGL compilation doesn't freeze the text animation.
     const timer = setTimeout(() => {
       setMountCanvas(true);
     }, 100); 

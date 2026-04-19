@@ -4,7 +4,8 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
-const LETTERS = "AB89!@#$%^&*()_+-=";
+// Optimized character set to prevent excessive horizontal overflow
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$*+-=";
 
 const services = [
   { id: '01', title: 'Web Dev', slug: 'web-architecture', desc: 'High-performance digital systems built for scale.' },
@@ -22,7 +23,6 @@ export default function ServicesGrid() {
 
   useEffect(() => {
     setIsMounted(true);
-    // [FIX] Detect if the device uses a touch screen (coarse pointer)
     setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches || 'ontouchstart' in window);
   }, []);
 
@@ -33,7 +33,7 @@ export default function ServicesGrid() {
   const springY = useSpring(mouseY, { stiffness: 800, damping: 35 });
 
   useEffect(() => {
-    if (isTouchDevice) return; // Don't track mouse on mobile
+    if (isTouchDevice) return; 
 
     const handleMouseMove = (e: MouseEvent) => {
       mouseX.set(e.clientX - 45);
@@ -49,30 +49,18 @@ export default function ServicesGrid() {
 
     setTimeout(() => {
       router.push(`/services/${slug}`);
-    }, 1200);
+    }, 1400);
   };
 
   return (
     <>
-      {/* [FIX] Only render the custom cursor portal if it's NOT a touch device */}
       {!isTouchDevice && isMounted && createPortal(
         <motion.div
           className="fixed top-0 left-0 pointer-events-none z-[99999] flex items-center justify-center rounded-full bg-white text-black font-black uppercase text-[10px] tracking-widest text-center leading-none"
-          style={{
-            width: 90,
-            height: 90,
-            x: springX,
-            y: springY
-          }}
+          style={{ width: 90, height: 90, x: springX, y: springY }}
           initial={{ scale: 0, opacity: 0 }}
-          animate={{
-            scale: hoveredId ? 1 : 0,
-            opacity: hoveredId ? 1 : 0,
-          }}
-          transition={{
-            scale: { type: "spring", stiffness: 300, damping: 20 },
-            opacity: { duration: 0.2 }
-          }}
+          animate={{ scale: hoveredId ? 1 : 0, opacity: hoveredId ? 1 : 0 }}
+          transition={{ scale: { type: "spring", stiffness: 300, damping: 20 }, opacity: { duration: 0.2 } }}
         >
           Click<br />Me
         </motion.div>,
@@ -81,55 +69,51 @@ export default function ServicesGrid() {
 
       <AnimatePresence>
         {transitioningTo && (
-          <div className="fixed inset-0 z-[9999] pointer-events-none overflow-hidden flex items-center justify-center">
-            <svg className="absolute w-0 h-0">
-              <defs>
-                <filter id="torn-edge-out" x="-20%" y="-20%" width="140%" height="140%">
-                  <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" result="noise" />
-                  <feDisplacementMap in="SourceGraphic" in2="noise" scale="150" xChannelSelector="R" yChannelSelector="G" />
-                </filter>
-              </defs>
-            </svg>
-
+          <div className="fixed inset-0 z-[9999] pointer-events-auto overflow-hidden flex items-center justify-center cursor-wait">
+            
             <motion.div
-              initial={{ x: "120%", y: "120%", rotate: -45 }}
-              animate={{ x: "-10%", y: "-10%", rotate: -45 }}
-              transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1] }}
-              className="absolute w-[300vw] h-[300vh] bg-[#020202]"
-              style={{ filter: "url(#torn-edge-out)" }}
-            >
-              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
-            </motion.div>
+              initial={{ y: "100%" }}
+              animate={{ y: "0%" }}
+              transition={{ duration: 0.7, ease: [0.76, 0, 0.24, 1] }}
+              className="absolute inset-0 bg-[#020202] z-0"
+            />
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: [0, 1, 1, 0], scale: [0.9, 1, 1, 0.95] }}
-              transition={{ duration: 1.2, times: [0, 0.3, 0.8, 1], ease: "easeInOut" }}
-              className="absolute inset-0 flex items-center justify-center mix-blend-difference text-center z-10"
-            >
-              <div className="flex flex-col items-center">
-                <span className="font-mono text-[10px] text-neutral-500 uppercase tracking-[0.4em] mb-3">
-                  ESTABLISHING_UPLINK //
-                </span>
-                <span className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter">
-                  {transitioningTo.title}
-                </span>
-              </div>
-            </motion.div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center mix-blend-difference text-center z-10 pointer-events-none">
+              <motion.span 
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: [0, 1, 1, 0], y: [15, 0, 0, -10] }}
+                transition={{ duration: 1.3, times: [0, 0.2, 0.8, 1], ease: "easeInOut" }}
+                className="font-mono text-[10px] sm:text-xs text-neutral-500 uppercase tracking-[0.4em] mb-4"
+              >
+                SYS_ROUTING //
+              </motion.span>
+              
+              <motion.span 
+                initial={{ opacity: 0, scale: 0.85, filter: "blur(10px)" }}
+                animate={{ 
+                  opacity: [0, 1, 1, 0], 
+                  scale: [0.85, 1, 1.05, 1.1], 
+                  filter: ["blur(10px)", "blur(0px)", "blur(0px)", "blur(10px)"] 
+                }}
+                transition={{ duration: 1.3, times: [0, 0.2, 0.8, 1], ease: [0.76, 0, 0.24, 1] }}
+                className="text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter"
+              >
+                {transitioningTo.title}
+              </motion.span>
+            </div>
           </div>
         )}
       </AnimatePresence>
 
       <motion.section
         animate={{
-          x: transitioningTo ? "5vw" : "0vw",
-          scale: transitioningTo ? 0.98 : 1,
-          filter: transitioningTo ? "blur(10px)" : "blur(0px)",
+          y: transitioningTo ? "8vh" : "0vh",
+          scale: transitioningTo ? 0.92 : 1,
           opacity: transitioningTo ? 0 : 1
         }}
-        transition={{ duration: 0.6, ease: "easeInOut" }}
-        style={{ willChange: "transform, opacity, filter" }}
-        className="w-full grid grid-cols-1 sm:grid-cols-2 border-l border-t sm:border-t-0 border-white/10 pointer-events-auto relative z-10"
+        transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
+        style={{ willChange: "transform, opacity", pointerEvents: transitioningTo ? "none" : "auto" }}
+        className="w-full grid grid-cols-1 sm:grid-cols-2 border-l border-t sm:border-t-0 border-white/10 relative z-10"
       >
         {services.map((service, index) => (
           <ServiceCard
@@ -152,7 +136,6 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
   const [glitchText, setGlitchText] = useState(service.title);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Extracted the scramble logic into its own reusable function
   const startScramble = () => {
     let iteration = 0;
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -167,12 +150,12 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
       if (iteration >= service.title.length) {
         if (intervalRef.current) clearInterval(intervalRef.current);
       }
-      iteration += 1 / 2;
+      iteration += 1 / 2; // Increased decryption speed slightly for tighter feel
     }, 30);
   };
 
   const triggerScramble = () => {
-    if (isTouchDevice) return; // Prevent hover triggers on mobile
+    if (isTouchDevice) return; 
     onHoverStart();
     startScramble();
   };
@@ -184,28 +167,21 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
     setGlitchText(service.title);
   };
 
-  // NEW: Handle the physical tap/click
-  const handleInteraction = (e: React.MouseEvent) => {
-    if (isTouchDevice) {
-      startScramble(); // Fire the decrypt effect instantly on tap
-    }
-    onClick(); // Call the parent navigation function
+  const handleInteraction = () => {
+    if (isTouchDevice) startScramble(); 
+    onClick(); 
   };
 
   return (
     <motion.button
-      onClick={handleInteraction} // <-- Pointed to our new handler
+      onClick={handleInteraction} 
       onMouseEnter={triggerScramble}
       onMouseLeave={handleMouseLeave}
       initial={{ opacity: 0, x: 20 }}
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true, amount: 0.1 }}
       transition={{ delay: index * 0.1, duration: 0.5, ease: "easeOut" }}
-      whileHover={isTouchDevice ? {} : {
-        x: [0, -3, 3, -2, 2, 0],
-        y: [0, 2, -2, 1, -1, 0],
-        transition: { duration: 0.3, ease: "linear" }
-      }}
+      whileHover={isTouchDevice ? {} : { x: [0, -3, 3, -2, 2, 0], y: [0, 2, -2, 1, -1, 0], transition: { duration: 0.3, ease: "linear" } }}
       style={{ willChange: "transform, opacity" }}
       className={`group relative text-left p-3 sm:p-6 lg:p-8 xl:p-12 border-b border-r border-white/10 flex flex-col justify-between transition-colors duration-300 min-h-[105px] sm:min-h-[160px] lg:min-h-[220px] overflow-hidden ${isTouchDevice ? '' : 'cursor-none hover:bg-white'}`}
     >
@@ -219,15 +195,30 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
       </div>
 
       <div className="mt-auto relative z-10">
-        <h3 className={`text-[clamp(1.15rem,6vw,2.5rem)] lg:text-4xl xl:text-5xl 2xl:text-6xl font-black uppercase tracking-tighter leading-[0.85] mb-1 sm:mb-3 break-words hyphens-auto transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-black'}`}>
-          {glitchText}
-        </h3>
+        
+        {/* AAA FIX: Phantom Text Architecture */}
+        <div className="relative mb-1 sm:mb-3">
+          
+          {/* 1. Phantom Element: Invisible, holds perfectly locked dimensions to prevent grid reflow */}
+          <h3 
+            className="text-[clamp(1.15rem,6vw,2.5rem)] lg:text-4xl xl:text-5xl 2xl:text-6xl font-black uppercase tracking-tighter leading-[0.85] break-words hyphens-auto invisible pointer-events-none select-none" 
+            aria-hidden="true"
+          >
+            {service.title}
+          </h3>
+          
+          {/* 2. Glitch Element: Absolute positioning removes it from document flow so its unpredictable width doesn't shift the grid */}
+          <h3 
+            className={`absolute top-0 left-0 w-full text-[clamp(1.15rem,6vw,2.5rem)] lg:text-4xl xl:text-5xl 2xl:text-6xl font-black uppercase tracking-tighter leading-[0.85] break-words hyphens-auto transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-black'}`}
+          >
+            {glitchText}
+          </h3>
+        </div>
 
         <p className={`font-mono text-[8px] sm:text-[9px] lg:text-[10px] uppercase tracking-[0.1em] sm:tracking-[0.2em] text-neutral-400 max-w-xs leading-tight sm:leading-relaxed transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-neutral-800'}`}>
           {service.desc}
         </p>
 
-        {/* NEW: Mobile Touch Indicator */}
         {isTouchDevice && (
           <div className="mt-3 sm:mt-4 flex items-center gap-2 font-mono text-[9px] sm:text-[10px] text-white/40 uppercase tracking-widest">
             <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse" />
