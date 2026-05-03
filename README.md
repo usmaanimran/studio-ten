@@ -21,7 +21,7 @@
 <div align="center">
 
 ### // WORK_IN_PROGRESS //
-*System calibration in progress. Deployment volume: 0.011.*
+
 
 ---
 Built by **Usmaan Imran** **
