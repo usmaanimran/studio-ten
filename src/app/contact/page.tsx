@@ -134,7 +134,7 @@ export default function ContactTerminal() {
             {/* NAME INPUT */}
             <div className="flex flex-col group">
               <label htmlFor="name" className="text-[10px] sm:text-xs md:text-sm font-mono tracking-widest mb-3 whitespace-nowrap">
-                <DecryptOnMount text="root@studio-ten:~#" delay={1200} className="text-neutral-500" /> <span className="text-white"><DecryptOnMount text="set_designation" delay={1800} /></span>
+                <DecryptOnMount text="root@studio-ten:~#" delay={1200} className="text-neutral-500" /> <span className="text-white"><DecryptOnMount text="user_name" delay={1800} /></span>
               </label>
               {/* FIX 3: Replaced the side indent with a pure console layout style */}
               <div className="flex items-center gap-3 sm:gap-4">
@@ -146,7 +146,7 @@ export default function ContactTerminal() {
             {/* EMAIL INPUT */}
             <div className="flex flex-col group">
               <label htmlFor="email" className="text-[10px] sm:text-xs md:text-sm font-mono tracking-widest mb-3 whitespace-nowrap">
-                <DecryptOnMount text="root@studio-ten:~#" delay={1400} className="text-neutral-500" /> <span className="text-white"><DecryptOnMount text="set_protocol" delay={2000} /></span>
+                <DecryptOnMount text="root@studio-ten:~#" delay={1400} className="text-neutral-500" /> <span className="text-white"><DecryptOnMount text="email_address" delay={2000} /></span>
               </label>
               <div className="flex items-center gap-3 sm:gap-4">
                 <span className="text-neutral-600 font-bold select-none text-sm sm:text-base">{'>'}</span>
@@ -157,7 +157,7 @@ export default function ContactTerminal() {
             {/* PHONE INPUT */}
             <div className="flex flex-col group">
               <label htmlFor="phone" className="text-[10px] sm:text-xs md:text-sm font-mono tracking-widest mb-3 whitespace-nowrap">
-                <DecryptOnMount text="root@studio-ten:~#" delay={1600} className="text-neutral-500" /> <span className="text-white"><DecryptOnMount text="set_comlink" delay={2200} /></span>
+                <DecryptOnMount text="root@studio-ten:~#" delay={1600} className="text-neutral-500" /> <span className="text-white"><DecryptOnMount text="contact_number" delay={2200} /></span>
               </label>
               <div className="flex items-center gap-3 sm:gap-4">
                 <span className="text-neutral-600 font-bold select-none text-sm sm:text-base">{'>'}</span>

@@ -14,6 +14,21 @@ import ServicesGrid from '@/components/ServicesGrid';
 const easeOutQuint = (t: number): number => 1 - Math.pow(1 - t, 5);
 
 // ─────────────────────────────────────────────
+// KINETIC FONT LIBRARY
+// ─────────────────────────────────────────────
+const KINETIC_FONTS = [
+  'var(--font-geist-sans)',
+  'var(--font-geist-mono)',
+  '"Times New Roman", Times, serif', 
+  '"Courier New", Courier, monospace', 
+  'Impact, sans-serif',
+  'Georgia, serif',
+  '"Arial Black", sans-serif',
+  'serif',
+  'cursive'
+];
+
+// ─────────────────────────────────────────────
 // DECRYPT LINK COMPONENT
 // ─────────────────────────────────────────────
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=";
@@ -53,11 +68,77 @@ const DecryptLink = ({ idleText, hoverText, href, className }: { idleText: strin
       href={href}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={className}
+      // VIBE MATCH: Added border, padding, background, and invert on hover
+      className={`group flex items-center gap-3 font-mono text-[10px] sm:text-xs text-white uppercase tracking-[0.2em] border border-white/20 bg-[#020202]/80 backdrop-blur-md px-6 py-3.5 hover:bg-white hover:text-black transition-all duration-300 ${className || ''}`}
     >
-      <span className="w-2 h-2 bg-white rounded-full group-hover:bg-neutral-400 transition-colors animate-pulse shrink-0" />
-      [ {text} ]
+      {/* Live status dot that turns black when hovered */}
+      <span className="w-2 h-2 bg-green-500 rounded-full group-hover:bg-black transition-colors animate-pulse shrink-0" />
+      <span className="font-bold tracking-[0.25em]">{text}</span>
     </Link>
+  );
+};
+// ─────────────────────────────────────────────
+// DYNAMIC FONT TEXT COMPONENT (KINETIC TYPOGRAPHY)
+// ─────────────────────────────────────────────
+const DynamicFontText = ({ 
+  text, 
+  layoutId, 
+  typographyState
+}: { 
+  text: string, 
+  layoutId: string, 
+  typographyState: { isGlitching: boolean; font: string; tick: number }
+}) => {
+  const [localMap, setLocalMap] = useState<string[]>(Array(text.length).fill(typographyState.font));
+  const [isSettled, setIsSettled] = useState(false);
+
+  useEffect(() => {
+    // The Preloader -> Home shared layout transition takes 1.4 seconds.
+    // We wait 2 seconds to ensure it is completely finished, then drop the transition duration to 0.
+    const timer = setTimeout(() => setIsSettled(true), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (typographyState.isGlitching) {
+      setLocalMap(text.split('').map(() => KINETIC_FONTS[Math.floor(Math.random() * KINETIC_FONTS.length)]));
+    }
+  }, [typographyState, text]);
+
+  return (
+    <motion.span
+      layout="position"
+      layoutId={layoutId}
+      // Smooth 1.4s transition for the initial preloader fly-in, then instant (0s) for the font glitches
+      transition={isSettled ? { duration: 0 } : { duration: 1.4, ease: [0.76, 0, 0.24, 1] }}
+      className="relative block font-sans whitespace-nowrap text-[12vw] md:text-[10vw] font-black uppercase tracking-tighter leading-[0.8] text-white"
+    >
+      {/* 1. THE PHANTOM LAYER */}
+      <span 
+        className="invisible pointer-events-none select-none" 
+        aria-hidden="true"
+        style={{ fontFamily: typographyState.font }}
+      >
+        {text}
+      </span>
+
+      {/* 2. THE VISUAL LAYER */}
+      <span className="absolute top-0 left-0 w-full h-full text-left pointer-events-none select-none" aria-hidden="true">
+        {typographyState.isGlitching ? (
+          // CHAOS STATE
+          text.split('').map((char, i) => (
+            <span key={i} style={{ fontFamily: localMap[i] }}>
+              {char === " " ? "\u00A0" : char}
+            </span>
+          ))
+        ) : (
+          // LOCKED STATE
+          <span style={{ fontFamily: typographyState.font }}>
+            {text}
+          </span>
+        )}
+      </span>
+    </motion.span>
   );
 };
 
@@ -78,6 +159,40 @@ function ScrollContent({
   isMobile: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const [typographyState, setTypographyState] = useState({
+    isGlitching: false,
+    font: 'var(--font-geist-sans)',
+    tick: 0 
+  });
+
+  useEffect(() => {
+    let isActive = true;
+    let intervalId: NodeJS.Timeout;
+
+    const runGlitch = async () => {
+      for (let i = 1; i <= 4; i++) {
+        if (!isActive) return;
+        setTypographyState(prev => ({ ...prev, isGlitching: true, tick: Math.random() }));
+        await new Promise(r => setTimeout(r, 180)); 
+      }
+
+      if (!isActive) return;
+      const nextFont = KINETIC_FONTS[Math.floor(Math.random() * KINETIC_FONTS.length)];
+      setTypographyState({ isGlitching: false, font: nextFont, tick: 0 });
+    };
+
+    const timeoutId = setTimeout(() => {
+      if (!isActive) return;
+      intervalId = setInterval(runGlitch, 3500); 
+    }, 2000); 
+
+    return () => {
+      isActive = false;
+      clearTimeout(timeoutId);
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, []);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -103,7 +218,6 @@ function ScrollContent({
 
   const textRevealPercent = useTransform(smoothProgress, [0.75, 0.95], [0, 100]);
   const textBgSize = useMotionTemplate`${textRevealPercent}% 100%`;
-  const atmosphereOpacity = useTransform(smoothProgress, [0.40, 0.75], [0, 1]);
 
   const textVariants: Variants = {
     hidden: { opacity: 0, y: '100%' },
@@ -113,7 +227,7 @@ function ScrollContent({
       transition: {
         duration: 1.2,
         ease: [0.33, 1, 0.68, 1],
-        delay: custom * 0.1 + 0.4,
+        delay: custom * 0.1 + 0.8,
       },
     }),
   };
@@ -126,9 +240,9 @@ function ScrollContent({
           <FluidBackground isReady={isReady} mouseRef={mouseCoordsRef} scrollProgress={smoothProgress} />
         </div>
 
-        <motion.div style={{ opacity: atmosphereOpacity }} className="absolute inset-0 z-[1] pointer-events-none">
+        <div className="absolute inset-0 z-[1] pointer-events-none">
           <Atmosphere />
-        </motion.div>
+        </div>
 
         {/* TRACK 1: HERO + SERVICES */}
         <motion.div
@@ -137,43 +251,43 @@ function ScrollContent({
         >
           {/* === SECTION 1: HERO === */}
           <motion.div style={{ opacity: heroOpacity }} className="w-screen h-full relative px-4 py-8 pb-24 sm:px-6 sm:pb-32 lg:p-24 flex flex-col justify-between pointer-events-none">
+
             <header className="flex justify-between items-start font-mono text-[10px] sm:text-xs uppercase tracking-[0.2em]">
               <motion.div custom={0} variants={textVariants} initial="hidden" animate={isReady ? 'visible' : 'hidden'} className="overflow-hidden">
-                <p>S_10 // Vol. 0.011</p>
+                <p>LK - GLOBAL </p>
               </motion.div>
-              <motion.div custom={1} variants={textVariants} initial="hidden" animate={isReady ? 'visible' : 'hidden'} className="overflow-hidden text-right hidden sm:block">
-                <p>Shall We?</p>
-                <p className="text-neutral-500 mt-1">LK — Global</p>
-              </motion.div>
+             
             </header>
 
+            {/* === HERO TEXT BURST === */}
             <div className="flex flex-col w-full">
-              <div className="overflow-hidden">
-                <motion.h1 custom={2} variants={textVariants} initial="hidden" animate={isReady ? 'visible' : 'hidden'} className="text-[12vw] md:text-[10vw] font-black uppercase leading-[0.8] tracking-tighter">
-                  Studio
-                </motion.h1>
+              <div className="flex w-full">
+                {isReady && (
+                  <DynamicFontText text="STUDIO" layoutId="word-studio" typographyState={typographyState} />
+                )}
               </div>
-              <div className="overflow-hidden flex justify-end w-full md:pr-[10vw]">
-                <motion.h1 custom={3} variants={textVariants} initial="hidden" animate={isReady ? 'visible' : 'hidden'} className="text-[12vw] md:text-[10vw] font-black uppercase leading-[0.8] tracking-tighter">
-                  Ten
-                </motion.h1>
+              <div className="flex justify-end w-full md:pr-[10vw]">
+                {isReady && (
+                  <DynamicFontText text="TEN" layoutId="word-ten" typographyState={typographyState} />
+                )}
               </div>
             </div>
 
             <footer className="grid grid-cols-2 md:grid-cols-3 gap-8 items-end border-t border-white/20 pt-8 mt-12 relative z-20">
               <div className="hidden md:block" />
-              <motion.div custom={4} variants={textVariants} initial="hidden" animate={isReady ? 'visible' : 'hidden'} className="overflow-hidden">
+              <motion.div custom={2} variants={textVariants} initial="hidden" animate={isReady ? 'visible' : 'hidden'} className="overflow-hidden">
                 <p className="font-mono text-[10px] sm:text-xs uppercase tracking-widest text-left md:text-center">Built For Change</p>
               </motion.div>
-              <motion.div custom={5} variants={textVariants} initial="hidden" animate={isReady ? 'visible' : 'hidden'} className="overflow-hidden flex justify-end">
+              <motion.div custom={3} variants={textVariants} initial="hidden" animate={isReady ? 'visible' : 'hidden'} className="overflow-hidden flex justify-end">
                 <div className="flex items-center gap-4">
-                  <span className="font-mono text-[10px] uppercase tracking-widest hidden sm:inline">Side Scroll</span>
+                  <span className="font-mono text-[10px] uppercase tracking-widest hidden sm:inline">Scroll DOWN</span>
                   <div className="w-8 sm:w-12 h-[1px] bg-white relative overflow-hidden">
                     <motion.div className="absolute inset-0 bg-neutral-900" animate={{ x: ['-100%', '100%'] }} transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }} />
                   </div>
                 </div>
               </motion.div>
             </footer>
+
           </motion.div>
 
           {/* === SECTION 2: SERVICES === */}
@@ -230,7 +344,6 @@ function ScrollContent({
       </div>
 
       {/* COORDINATE DISPLAYS */}
-      {/* [AAA FIX] Added 'hidden md:flex' back. Trackers are now hidden on mobile but active on tablet+ */}
       <div className="fixed inset-0 pointer-events-none mix-blend-difference z-30">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={isReady ? { opacity: 1, y: 0 } : {}} transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }} className="absolute left-1/2 -translate-x-1/2 bottom-4 sm:bottom-8 hidden md:flex items-center gap-2 sm:gap-3 font-mono text-[8px] sm:text-[9px] text-neutral-500 uppercase tracking-[0.2em]">
           <span>TRK_X_AXIS //</span><span className="text-white">[ {coords.x.toString().padStart(4, '0')} ]</span>
@@ -249,13 +362,11 @@ function ScrollContent({
           initial={{ opacity: 0, y: -20 }}
           animate={isReady ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }}
-          // [AAA FIX] Pinned to the bottom-right for touch ergonomics and to clear the header text.
-          // It only snaps back to the top-right on xl (1280px+) desktop displays.
           className="absolute bottom-6 right-6 md:bottom-8 md:right-8 xl:bottom-auto xl:top-10 xl:right-10 pointer-events-auto"
         >
           <DecryptLink
             idleText="CONTACT_US"
-            hoverText="INITIATE_CONNECTION"
+            hoverText="NICE ONE"
             href="/contact"
             className="group flex items-center gap-3 font-mono text-[10px] sm:text-xs text-white uppercase tracking-[0.2em] hover:text-neutral-400 transition-colors"
           />
@@ -331,7 +442,7 @@ export default function StudioTenHome() {
     };
 
     const handleMouseMove = (e: MouseEvent) => updateCoords(e.clientX, e.clientY);
-    
+
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length > 0) {
         updateCoords(e.touches[0].clientX, e.touches[0].clientY);
@@ -368,7 +479,7 @@ export default function StudioTenHome() {
       if (!isMobile) return;
       touchStartY = e.touches[0].clientY;
       touchStartSection = currentSectionRef.current;
-      
+
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
         isScrollingRef.current = false;
@@ -381,17 +492,17 @@ export default function StudioTenHome() {
 
       if (!isScrollingRef.current && isReady) {
         if (container) {
-           const currentY = e.touches[0].clientY;
-           const delta = touchStartY - currentY;
-           const expectedScroll = (touchStartSection * container.clientHeight) + delta;
-           container.scrollTop = Math.max(0, Math.min(container.scrollHeight - container.clientHeight, expectedScroll));
+          const currentY = e.touches[0].clientY;
+          const delta = touchStartY - currentY;
+          const expectedScroll = (touchStartSection * container.clientHeight) + delta;
+          container.scrollTop = Math.max(0, Math.min(container.scrollHeight - container.clientHeight, expectedScroll));
         }
       }
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
       if (!isMobile || !isReady || isScrollingRef.current) return;
-      
+
       const touchEndY = e.changedTouches[0].clientY;
       const deltaY = touchStartY - touchEndY;
 
