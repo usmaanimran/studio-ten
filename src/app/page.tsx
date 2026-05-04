@@ -1,6 +1,16 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { AnimatePresence, motion, Variants, useScroll, useTransform, useSpring, useMotionTemplate } from 'framer-motion';
+import { 
+  AnimatePresence, 
+  motion, 
+  Variants, 
+  useScroll, 
+  useTransform, 
+  useSpring, 
+  useMotionTemplate,
+  useMotionValue,
+  MotionValue
+} from 'framer-motion';
 import Link from 'next/link';
 
 import FluidBackground from '@/components/FluidBackground';
@@ -68,15 +78,14 @@ const DecryptLink = ({ idleText, hoverText, href, className }: { idleText: strin
       href={href}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      // VIBE MATCH: Added border, padding, background, and invert on hover
       className={`group flex items-center gap-3 font-mono text-[10px] sm:text-xs text-white uppercase tracking-[0.2em] border border-white/20 bg-[#020202]/80 backdrop-blur-md px-6 py-3.5 hover:bg-white hover:text-black transition-all duration-300 ${className || ''}`}
     >
-      {/* Live status dot that turns black when hovered */}
       <span className="w-2 h-2 bg-green-500 rounded-full group-hover:bg-black transition-colors animate-pulse shrink-0" />
       <span className="font-bold tracking-[0.25em]">{text}</span>
     </Link>
   );
 };
+
 // ─────────────────────────────────────────────
 // DYNAMIC FONT TEXT COMPONENT (KINETIC TYPOGRAPHY)
 // ─────────────────────────────────────────────
@@ -93,8 +102,6 @@ const DynamicFontText = ({
   const [isSettled, setIsSettled] = useState(false);
 
   useEffect(() => {
-    // The Preloader -> Home shared layout transition takes 1.4 seconds.
-    // We wait 2 seconds to ensure it is completely finished, then drop the transition duration to 0.
     const timer = setTimeout(() => setIsSettled(true), 2000);
     return () => clearTimeout(timer);
   }, []);
@@ -109,9 +116,17 @@ const DynamicFontText = ({
     <motion.span
       layout="position"
       layoutId={layoutId}
-      // Smooth 1.4s transition for the initial preloader fly-in, then instant (0s) for the font glitches
       transition={isSettled ? { duration: 0 } : { duration: 1.4, ease: [0.76, 0, 0.24, 1] }}
       className="relative block font-sans whitespace-nowrap text-[12vw] md:text-[10vw] font-black uppercase tracking-tighter leading-[0.8] text-white"
+      // --- SUB-PIXEL SNAPPING FIX APPLIED HERE ---
+      style={{
+        WebkitFontSmoothing: "antialiased",
+        MozOsxFontSmoothing: "grayscale",
+        backfaceVisibility: "hidden",
+        WebkitBackfaceVisibility: "hidden",
+        willChange: "transform",
+        z: 0 
+      }}
     >
       {/* 1. THE PHANTOM LAYER */}
       <span 
@@ -125,14 +140,12 @@ const DynamicFontText = ({
       {/* 2. THE VISUAL LAYER */}
       <span className="absolute top-0 left-0 w-full h-full text-left pointer-events-none select-none" aria-hidden="true">
         {typographyState.isGlitching ? (
-          // CHAOS STATE
           text.split('').map((char, i) => (
             <span key={i} style={{ fontFamily: localMap[i] }}>
               {char === " " ? "\u00A0" : char}
             </span>
           ))
         ) : (
-          // LOCKED STATE
           <span style={{ fontFamily: typographyState.font }}>
             {text}
           </span>
@@ -146,13 +159,15 @@ const DynamicFontText = ({
 // SCROLL CONTENT
 // ─────────────────────────────────────────────
 function ScrollContent({
-  coords,
+  mouseX,
+  mouseY,
   scrollContainerRef,
   isReady,
   mouseCoordsRef,
   isMobile
 }: {
-  coords: { x: number; y: number };
+  mouseX: MotionValue<number>;
+  mouseY: MotionValue<number>;
   scrollContainerRef: React.RefObject<HTMLElement | null>;
   isReady: boolean;
   mouseCoordsRef: React.MutableRefObject<{ x: number; y: number }>;
@@ -165,6 +180,10 @@ function ScrollContent({
     font: 'var(--font-geist-sans)',
     tick: 0 
   });
+
+  // Create formatted motion values for the HUD
+  const displayX = useTransform(mouseX, (v) => `[ ${Math.round(v).toString().padStart(4, '0')} ]`);
+  const displayY = useTransform(mouseY, (v) => `[ ${Math.round(v).toString().padStart(4, '0')} ]`);
 
   useEffect(() => {
     let isActive = true;
@@ -256,7 +275,6 @@ function ScrollContent({
               <motion.div custom={0} variants={textVariants} initial="hidden" animate={isReady ? 'visible' : 'hidden'} className="overflow-hidden">
                 <p>LK - GLOBAL </p>
               </motion.div>
-             
             </header>
 
             {/* === HERO TEXT BURST === */}
@@ -346,13 +364,13 @@ function ScrollContent({
       {/* COORDINATE DISPLAYS */}
       <div className="fixed inset-0 pointer-events-none mix-blend-difference z-30">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={isReady ? { opacity: 1, y: 0 } : {}} transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }} className="absolute left-1/2 -translate-x-1/2 bottom-4 sm:bottom-8 hidden md:flex items-center gap-2 sm:gap-3 font-mono text-[8px] sm:text-[9px] text-neutral-500 uppercase tracking-[0.2em]">
-          <span>TRK_X_AXIS //</span><span className="text-white">[ {coords.x.toString().padStart(4, '0')} ]</span>
+          <span>TRK_X_AXIS //</span><motion.span className="text-white">{displayX}</motion.span>
         </motion.div>
       </div>
 
       <div className="fixed inset-0 pointer-events-none mix-blend-difference z-30">
         <motion.div initial={{ opacity: 0, x: 20 }} animate={isReady ? { opacity: 1, x: 0 } : {}} transition={{ delay: 1.2, duration: 1, ease: 'easeOut' }} className="absolute right-3 sm:right-8 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-2 sm:gap-3 font-mono text-[8px] sm:text-[9px] text-neutral-500 uppercase tracking-[0.2em]" style={{ writingMode: 'vertical-rl' }}>
-          <span>TRK_Y_AXIS //</span><span className="text-white">[ {coords.y.toString().padStart(4, '0')} ]</span>
+          <span>TRK_Y_AXIS //</span><motion.span className="text-white">{displayY}</motion.span>
         </motion.div>
       </div>
 
@@ -381,9 +399,13 @@ function ScrollContent({
 // ─────────────────────────────────────────────
 export default function StudioTenHome() {
   const [isReady, setIsReady] = useState(false);
-  const [needsPreloader, setNeedsPreloader] = useState(true); // <-- ADDED THIS
+  const [needsPreloader, setNeedsPreloader] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  
+  // Replaced React State with Framer MotionValues
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
   const scrollContainerRef = useRef<HTMLElement>(null);
   const mouseCoordsRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
@@ -392,15 +414,12 @@ export default function StudioTenHome() {
   const rafRef = useRef<number>(0);
   const TOTAL_SECTIONS = 4;
 
-  // --- ADDED THIS EFFECT ---
-  // Checks if we've already booted this session
   useEffect(() => {
     if (sessionStorage.getItem('studio_ten_booted')) {
       setNeedsPreloader(false);
       setIsReady(true);
     }
   }, []);
-  // -------------------------
 
   useEffect(() => {
     const checkMobile = () => {
@@ -448,7 +467,9 @@ export default function StudioTenHome() {
 
   useEffect(() => {
     const updateCoords = (clientX: number, clientY: number) => {
-      setCoords({ x: Math.round(clientX), y: Math.round(clientY) });
+      // Update motion values directly to skip React renders
+      mouseX.set(clientX);
+      mouseY.set(clientY);
       mouseCoordsRef.current = { x: clientX, y: clientY };
     };
 
@@ -469,7 +490,7 @@ export default function StudioTenHome() {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchstart', handleTouchMove);
     };
-  }, []);
+  }, [mouseX, mouseY]);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -570,7 +591,6 @@ export default function StudioTenHome() {
       className={`relative w-full h-[100dvh] overflow-y-auto overflow-x-hidden bg-[#020202] text-white cursor-crosshair ${isMobile ? 'touch-none' : 'touch-auto'}`}
     >
       <AnimatePresence>
-        {/* --- ADDED LOGIC HERE --- */}
         {needsPreloader && !isReady && (
           <Preloader 
             key="preloader" 
@@ -582,7 +602,14 @@ export default function StudioTenHome() {
         )}
       </AnimatePresence>
 
-      <ScrollContent coords={coords} scrollContainerRef={scrollContainerRef} isReady={isReady} mouseCoordsRef={mouseCoordsRef} isMobile={isMobile} />
+      <ScrollContent 
+        mouseX={mouseX} 
+        mouseY={mouseY} 
+        scrollContainerRef={scrollContainerRef} 
+        isReady={isReady} 
+        mouseCoordsRef={mouseCoordsRef} 
+        isMobile={isMobile} 
+      />
     </main>
   );
 }

@@ -17,7 +17,12 @@ const START_DELAY_Z = 1500;
 const MAX_DEPTH = (CONFIG.itemCount - 1) * CONFIG.zGap + START_DELAY_Z;
 const TOTAL_SCROLL_PX = MAX_DEPTH / CONFIG.camSpeed;
 
-const TEXTS = ["IMPACT", "VELOCITY", "BRUTAL", "SYSTEM", "FUTURE", "DESIGN", "PIXEL", "HYPER", "NEON", "VOID"];
+const TEXTS = [
+  "ENGINE", "SYSTEM", "MATRIX", "AGENTS", "VECTOR", 
+  "SIGNAL", "STREAM", "MODELS", "BRUTAL", "PIXELS", 
+  "MOTION", "FLUIDS", "VISION", "BEYOND", "IMPACT", 
+  "FUTURE", "PROMPT", "SCRIPT", "SCROLL", "LAYERS"
+];
 
 // ============================================================================
 // NATIVE FLUID CANVAS (THE NEON FOG - FULLY RESTORED)

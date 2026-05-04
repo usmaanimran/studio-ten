@@ -43,41 +43,58 @@ export default function Preloader({ onComplete }: { onComplete: () => void }) {
           className={`absolute top-0 left-0 h-full whitespace-nowrap border-b-[3px] md:border-b-[5px] border-white pb-3 md:pb-5 ${isFinished ? 'overflow-visible' : 'overflow-hidden'}`}
           style={{ willChange: "width" }}
         >
-          <div className="text-white flex gap-4 md:gap-8">
-            <motion.span 
-              layout="position"
-              layoutId="word-studio" 
-              transition={{ duration: 1.4, ease: [0.76, 0, 0.24, 1] }}
-              className="relative block font-sans whitespace-nowrap text-[12vw] md:text-[10vw] font-black uppercase tracking-tighter leading-[0.8] text-white"
-            >
-              {/* Added missing fontFamily style to phantom layer for perfect 1:1 DOM matching */}
-              <span className="invisible pointer-events-none select-none" aria-hidden="true" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                STUDIO
-              </span>
-              <span className="absolute top-0 left-0 w-full h-full text-left pointer-events-none select-none" aria-hidden="true">
-                <span style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                  STUDIO
-                </span>
-              </span>
-            </motion.span>
-            
-            <motion.span 
-              layout="position"
-              layoutId="word-ten" 
-              transition={{ duration: 1.4, ease: [0.76, 0, 0.24, 1] }}
-              className="relative block font-sans whitespace-nowrap text-[12vw] md:text-[10vw] font-black uppercase tracking-tighter leading-[0.8] text-white"
-            >
-              {/* Added missing fontFamily style to phantom layer for perfect 1:1 DOM matching */}
-              <span className="invisible pointer-events-none select-none" aria-hidden="true" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                TEN
-              </span>
-              <span className="absolute top-0 left-0 w-full h-full text-left pointer-events-none select-none" aria-hidden="true">
-                <span style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                  TEN
-                </span>
-              </span>
-            </motion.span>
-          </div>
+          {/* Find this block inside Preloader.tsx */}
+<div className="text-white flex gap-4 md:gap-8">
+  <motion.span 
+    layout="position"
+    layoutId="word-studio" 
+    transition={{ duration: 1.4, ease: [0.76, 0, 0.24, 1] }}
+    className="relative block font-sans whitespace-nowrap text-[12vw] md:text-[10vw] font-black uppercase tracking-tighter leading-[0.8] text-white"
+    // --- ADD THIS STYLE BLOCK ---
+    style={{
+      WebkitFontSmoothing: "antialiased",
+      MozOsxFontSmoothing: "grayscale",
+      backfaceVisibility: "hidden",
+      WebkitBackfaceVisibility: "hidden",
+      willChange: "transform",
+      z: 0 
+    }}
+  >
+    <span className="invisible pointer-events-none select-none" aria-hidden="true" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+      STUDIO
+    </span>
+    <span className="absolute top-0 left-0 w-full h-full text-left pointer-events-none select-none" aria-hidden="true">
+      <span style={{ fontFamily: 'var(--font-geist-sans)' }}>
+        STUDIO
+      </span>
+    </span>
+  </motion.span>
+  
+  <motion.span 
+    layout="position"
+    layoutId="word-ten" 
+    transition={{ duration: 1.4, ease: [0.76, 0, 0.24, 1] }}
+    className="relative block font-sans whitespace-nowrap text-[12vw] md:text-[10vw] font-black uppercase tracking-tighter leading-[0.8] text-white"
+    // --- ADD THIS STYLE BLOCK ---
+    style={{
+      WebkitFontSmoothing: "antialiased",
+      MozOsxFontSmoothing: "grayscale",
+      backfaceVisibility: "hidden",
+      WebkitBackfaceVisibility: "hidden",
+      willChange: "transform",
+      z: 0 
+    }}
+  >
+    <span className="invisible pointer-events-none select-none" aria-hidden="true" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+      TEN
+    </span>
+    <span className="absolute top-0 left-0 w-full h-full text-left pointer-events-none select-none" aria-hidden="true">
+      <span style={{ fontFamily: 'var(--font-geist-sans)' }}>
+        TEN
+      </span>
+    </span>
+  </motion.span>
+</div>
         </motion.div>
 
       </div>
