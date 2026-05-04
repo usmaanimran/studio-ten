@@ -8,10 +8,9 @@ export default function Preloader({ onComplete }: { onComplete: () => void }) {
 
   return (
     <motion.div
-      // Added mix-blend-difference here to match the home page's visual blending
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-transparent pointer-events-none mix-blend-difference"
+      // REMOVED mix-blend-difference. This was the culprit causing the black flash on Vercel!
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-transparent pointer-events-none"
     >
-      {/* Updated text size classes to text-[12vw] md:text-[10vw] to perfectly match the Home Page sizing */}
       <div className="relative inline-flex flex-col text-[12vw] md:text-[10vw] font-sans font-black tracking-tighter uppercase leading-[0.8]">
 
         {/* BASE LAYER: Fades out INSTANTLY when the wipe finishes so it doesn't leave a ghost trail */}
@@ -37,12 +36,9 @@ export default function Preloader({ onComplete }: { onComplete: () => void }) {
             delay: 0.3
           }}
           onAnimationComplete={() => {
-            // CRITICAL: Drop the overflow-hidden cage so the text can break out and fly
             setIsFinished(true);
-            // Millisecond pause to ensure state updates before triggering the layout swap
             setTimeout(onComplete, 50);
           }}
-          // Fades out just the white underline smoothly
           exit={{ borderColor: "rgba(255,255,255,0)", transition: { duration: 0.2 } }}
           className={`absolute top-0 left-0 h-full whitespace-nowrap border-b-[3px] md:border-b-[5px] border-white pb-3 md:pb-5 ${isFinished ? 'overflow-visible' : 'overflow-hidden'}`}
           style={{ willChange: "width" }}
@@ -54,7 +50,8 @@ export default function Preloader({ onComplete }: { onComplete: () => void }) {
               transition={{ duration: 1.4, ease: [0.76, 0, 0.24, 1] }}
               className="relative block font-sans whitespace-nowrap text-[12vw] md:text-[10vw] font-black uppercase tracking-tighter leading-[0.8] text-white"
             >
-              <span className="invisible pointer-events-none select-none" aria-hidden="true">
+              {/* Added missing fontFamily style to phantom layer for perfect 1:1 DOM matching */}
+              <span className="invisible pointer-events-none select-none" aria-hidden="true" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                 STUDIO
               </span>
               <span className="absolute top-0 left-0 w-full h-full text-left pointer-events-none select-none" aria-hidden="true">
@@ -70,7 +67,8 @@ export default function Preloader({ onComplete }: { onComplete: () => void }) {
               transition={{ duration: 1.4, ease: [0.76, 0, 0.24, 1] }}
               className="relative block font-sans whitespace-nowrap text-[12vw] md:text-[10vw] font-black uppercase tracking-tighter leading-[0.8] text-white"
             >
-              <span className="invisible pointer-events-none select-none" aria-hidden="true">
+              {/* Added missing fontFamily style to phantom layer for perfect 1:1 DOM matching */}
+              <span className="invisible pointer-events-none select-none" aria-hidden="true" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                 TEN
               </span>
               <span className="absolute top-0 left-0 w-full h-full text-left pointer-events-none select-none" aria-hidden="true">
