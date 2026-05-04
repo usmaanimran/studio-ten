@@ -1,10 +1,10 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
+import { motion, useMotionValue, useSpring } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
-// Optimized character set to prevent excessive horizontal overflow
+// Optimized character set
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$*+-=";
 
 const services = [
@@ -16,7 +16,8 @@ const services = [
 
 export default function ServicesGrid() {
   const router = useRouter();
-  const [transitioningTo, setTransitioningTo] = useState<{ slug: string, title: string } | null>(null);
+  
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -34,7 +35,6 @@ export default function ServicesGrid() {
 
   useEffect(() => {
     if (isTouchDevice) return; 
-
     const handleMouseMove = (e: MouseEvent) => {
       mouseX.set(e.clientX - 45);
       mouseY.set(e.clientY - 45);
@@ -43,13 +43,26 @@ export default function ServicesGrid() {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [mouseX, mouseY, isTouchDevice]);
 
-  const handleNavigate = (slug: string, title: string) => {
-    if (transitioningTo) return;
-    setTransitioningTo({ slug, title });
+  const handleNavigate = (slug: string) => {
+    if (isTransitioning) return;
+    
+    if (slug === 'web-architecture') {
+      setIsTransitioning(true);
+      document.body.style.cursor = 'wait';
 
-    setTimeout(() => {
+      // 1. Fire the GPU Glitch instantly. Zero ms delay.
+      window.dispatchEvent(new CustomEvent('START_GLITCH', { detail: { mode: 'FORWARD' } }));
+
+      // 2. Change the route in the background while the black terminal covers the screen
+      setTimeout(() => {
+        document.body.style.cursor = 'default';
+        router.push(`/services/${slug}`);
+      }, 1000);
+    } else {
+      // For all other pages, skip the glitch and navigate normally 
+      // (This leaves room for you to add unique ones later)
       router.push(`/services/${slug}`);
-    }, 1400);
+    }
   };
 
   return (
@@ -67,52 +80,14 @@ export default function ServicesGrid() {
         document.body
       )}
 
-      <AnimatePresence>
-        {transitioningTo && (
-          <div className="fixed inset-0 z-[9999] pointer-events-auto overflow-hidden flex items-center justify-center cursor-wait">
-            
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: "0%" }}
-              transition={{ duration: 0.7, ease: [0.76, 0, 0.24, 1] }}
-              className="absolute inset-0 bg-[#020202] z-0"
-            />
-
-            <div className="absolute inset-0 flex flex-col items-center justify-center mix-blend-difference text-center z-10 pointer-events-none">
-              <motion.span 
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: [0, 1, 1, 0], y: [15, 0, 0, -10] }}
-                transition={{ duration: 1.3, times: [0, 0.2, 0.8, 1], ease: "easeInOut" }}
-                className="font-mono text-[10px] sm:text-xs text-neutral-500 uppercase tracking-[0.4em] mb-4"
-              >
-                SYS_ROUTING //
-              </motion.span>
-              
-              <motion.span 
-                initial={{ opacity: 0, scale: 0.85, filter: "blur(10px)" }}
-                animate={{ 
-                  opacity: [0, 1, 1, 0], 
-                  scale: [0.85, 1, 1.05, 1.1], 
-                  filter: ["blur(10px)", "blur(0px)", "blur(0px)", "blur(10px)"] 
-                }}
-                transition={{ duration: 1.3, times: [0, 0.2, 0.8, 1], ease: [0.76, 0, 0.24, 1] }}
-                className="text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter"
-              >
-                {transitioningTo.title}
-              </motion.span>
-            </div>
-          </div>
-        )}
-      </AnimatePresence>
-
       <motion.section
         animate={{
-          y: transitioningTo ? "8vh" : "0vh",
-          scale: transitioningTo ? 0.92 : 1,
-          opacity: transitioningTo ? 0 : 1
+          y: isTransitioning ? "8vh" : "0vh",
+          scale: isTransitioning ? 0.92 : 1,
+          opacity: isTransitioning ? 0 : 1
         }}
         transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
-        style={{ willChange: "transform, opacity", pointerEvents: transitioningTo ? "none" : "auto" }}
+        style={{ willChange: "transform, opacity", pointerEvents: isTransitioning ? "none" : "auto" }}
         className="w-full grid grid-cols-1 sm:grid-cols-2 border-l border-t sm:border-t-0 border-white/10 relative z-10"
       >
         {services.map((service, index) => (
@@ -124,7 +99,7 @@ export default function ServicesGrid() {
             isHovered={hoveredId === service.id}
             onHoverStart={() => setHoveredId(service.id)}
             onHoverEnd={() => setHoveredId(null)}
-            onClick={() => handleNavigate(service.slug, service.title)}
+            onClick={() => handleNavigate(service.slug)}
           />
         ))}
       </motion.section>
@@ -150,7 +125,7 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
       if (iteration >= service.title.length) {
         if (intervalRef.current) clearInterval(intervalRef.current);
       }
-      iteration += 1 / 2; // Increased decryption speed slightly for tighter feel
+      iteration += 1 / 2;
     }, 30);
   };
 
@@ -195,22 +170,11 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
       </div>
 
       <div className="mt-auto relative z-10">
-        
-        {/* AAA FIX: Phantom Text Architecture */}
         <div className="relative mb-1 sm:mb-3">
-          
-          {/* 1. Phantom Element: Invisible, holds perfectly locked dimensions to prevent grid reflow */}
-          <h3 
-            className="text-[clamp(1.15rem,6vw,2.5rem)] lg:text-4xl xl:text-5xl 2xl:text-6xl font-black uppercase tracking-tighter leading-[0.85] break-words hyphens-auto invisible pointer-events-none select-none" 
-            aria-hidden="true"
-          >
+          <h3 className="text-[clamp(1.15rem,6vw,2.5rem)] lg:text-4xl xl:text-5xl 2xl:text-6xl font-black uppercase tracking-tighter leading-[0.85] break-words hyphens-auto invisible pointer-events-none select-none" aria-hidden="true">
             {service.title}
           </h3>
-          
-          {/* 2. Glitch Element: Absolute positioning removes it from document flow so its unpredictable width doesn't shift the grid */}
-          <h3 
-            className={`absolute top-0 left-0 w-full text-[clamp(1.15rem,6vw,2.5rem)] lg:text-4xl xl:text-5xl 2xl:text-6xl font-black uppercase tracking-tighter leading-[0.85] break-words hyphens-auto transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-black'}`}
-          >
+          <h3 className={`absolute top-0 left-0 w-full text-[clamp(1.15rem,6vw,2.5rem)] lg:text-4xl xl:text-5xl 2xl:text-6xl font-black uppercase tracking-tighter leading-[0.85] break-words hyphens-auto transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-black'}`}>
             {glitchText}
           </h3>
         </div>
@@ -218,13 +182,6 @@ function ServiceCard({ service, index, isTouchDevice, onHoverStart, onHoverEnd, 
         <p className={`font-mono text-[8px] sm:text-[9px] lg:text-[10px] uppercase tracking-[0.1em] sm:tracking-[0.2em] text-neutral-400 max-w-xs leading-tight sm:leading-relaxed transition-colors duration-300 ${isTouchDevice ? '' : 'group-hover:text-neutral-800'}`}>
           {service.desc}
         </p>
-
-        {isTouchDevice && (
-          <div className="mt-3 sm:mt-4 flex items-center gap-2 font-mono text-[9px] sm:text-[10px] text-white/40 uppercase tracking-widest">
-            <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse" />
-            [ Tap To Initiate ]
-          </div>
-        )}
       </div>
     </motion.button>
   );

@@ -381,6 +381,7 @@ function ScrollContent({
 // ─────────────────────────────────────────────
 export default function StudioTenHome() {
   const [isReady, setIsReady] = useState(false);
+  const [needsPreloader, setNeedsPreloader] = useState(true); // <-- ADDED THIS
   const [isMobile, setIsMobile] = useState(false);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const scrollContainerRef = useRef<HTMLElement>(null);
@@ -390,6 +391,16 @@ export default function StudioTenHome() {
   const isScrollingRef = useRef(false);
   const rafRef = useRef<number>(0);
   const TOTAL_SECTIONS = 4;
+
+  // --- ADDED THIS EFFECT ---
+  // Checks if we've already booted this session
+  useEffect(() => {
+    if (sessionStorage.getItem('studio_ten_booted')) {
+      setNeedsPreloader(false);
+      setIsReady(true);
+    }
+  }, []);
+  // -------------------------
 
   useEffect(() => {
     const checkMobile = () => {
@@ -559,7 +570,16 @@ export default function StudioTenHome() {
       className={`relative w-full h-[100dvh] overflow-y-auto overflow-x-hidden bg-[#020202] text-white cursor-crosshair ${isMobile ? 'touch-none' : 'touch-auto'}`}
     >
       <AnimatePresence>
-        {!isReady && <Preloader key="preloader" onComplete={() => setIsReady(true)} />}
+        {/* --- ADDED LOGIC HERE --- */}
+        {needsPreloader && !isReady && (
+          <Preloader 
+            key="preloader" 
+            onComplete={() => {
+              sessionStorage.setItem('studio_ten_booted', 'true');
+              setIsReady(true);
+            }} 
+          />
+        )}
       </AnimatePresence>
 
       <ScrollContent coords={coords} scrollContainerRef={scrollContainerRef} isReady={isReady} mouseCoordsRef={mouseCoordsRef} isMobile={isMobile} />

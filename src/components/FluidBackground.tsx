@@ -314,10 +314,10 @@ export default function FluidBackground({
   return (
     <div className="absolute inset-0 z-0 bg-[#010208] pointer-events-none">
       <Canvas
-        dpr={isMobile ? 1 : [1, 1.5]}
-        camera={{ position: [0, 0, 1] }}
-        gl={{ antialias: false, powerPreference: 'high-performance' }}
-      >
+  dpr={isMobile ? 1 : [1, 1.5]}
+  camera={{ position: [0, 0, 1] }}
+  gl={{ antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }}
+>
         <FieldMesh
           isReady={isReady}
           mouseRef={mouseRef}

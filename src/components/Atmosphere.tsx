@@ -138,10 +138,10 @@ export default function Atmosphere() {
   return (
     <div className="absolute inset-0 z-0">
       <Canvas
-        dpr={isMobile ? 1 : [1, 1.5]}
-        camera={{ position: [0, 0, 5], fov: 72 }}
-        gl={{ antialias: false, powerPreference: 'high-performance' }}
-      >
+  dpr={isMobile ? 1 : [1, 1.5]}
+  camera={{ position: [0, 0, 1] }}
+  gl={{ antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }}
+>
         {/* Depth fog matches the fluid background base color */}
         <fog attach="fog" args={['#010208', 3, 12]} />
 

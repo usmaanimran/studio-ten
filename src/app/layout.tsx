@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import PageTransitionEffect from "@/components/PageTransitionEffect";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,10 +26,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      // Changed h-full to h-[100dvh] to lock the viewport securely on mobile
       className={`${geistSans.variable} ${geistMono.variable} h-[100dvh] antialiased`}
     >
-      <body className="h-[100dvh] flex flex-col">{children}</body>
+      <body className="h-[100dvh] flex flex-col">
+        {/* The global transition overlay mounts here */}
+        <PageTransitionEffect />
+        {children}
+      </body>
     </html>
   );
 }

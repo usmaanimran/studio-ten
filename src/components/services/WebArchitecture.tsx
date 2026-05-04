@@ -3,6 +3,7 @@ import { useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Lenis from 'lenis';
+import SysReturnButton from '../SysReturnButton';
 
 // --- DYNAMIC CONFIGURATION ---
 const CONFIG = {
@@ -38,8 +39,8 @@ function NativeFluidCanvas() {
       const isMobile = window.innerWidth < 768;
       
       const config = {
-        TEXTURE_DOWNSAMPLE: isMobile ? 2 : 1, 
-        DENSITY_DISSIPATION: 0.97,
+  TEXTURE_DOWNSAMPLE: isMobile ? 1 : 0, // 1 for mobile (half-res), 0 for desktop (full-res)
+  DENSITY_DISSIPATION: 0.97,
         VELOCITY_DISSIPATION: 0.98,
         PRESSURE_DISSIPATION: 0.8,
         PRESSURE_ITERATIONS: isMobile ? 5 : 20,
@@ -979,24 +980,12 @@ export default function WebArchitecturePage() {
 
       <div className="absolute top-0 w-full z-[-1]" style={{ height: `calc(${TOTAL_SCROLL_PX}px + 100vh)` }} />
 
-      <div className="fixed inset-0 z-[9999] pointer-events-none overflow-hidden flex items-center justify-center">
-        <motion.div
-          initial={{ scale: 1.5, opacity: 1 }}
-          animate={{ scale: 10, opacity: 0 }}
-          transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1], delay: 0.1 }}
-          className="absolute w-[150vw] h-[150vh] bg-[#020202] rounded-[100%]"
-          style={{ willChange: "transform, opacity" }}
-        />
-      </div>
-
       <motion.div
-        initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
-        className="fixed top-6 left-6 sm:top-10 sm:left-10 z-[100]"
-      >
-        <Link href="/" className="text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-colors mix-blend-difference font-mono">
-          &lt;&lt; SYS_RETURN
-        </Link>
-      </motion.div>
+  initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
+  className="fixed top-6 left-6 sm:top-10 sm:left-10 z-[100]"
+>
+  <SysReturnButton className="text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-colors mix-blend-difference font-mono" />
+</motion.div>
 
       <div className="fixed inset-0 z-0 bg-black pointer-events-auto touch-pan-y">
         {mountCanvas && (
@@ -1012,7 +1001,7 @@ export default function WebArchitecturePage() {
 
       <div className="hyper-hud mix-blend-difference">
         <div className="flex justify-between items-center">
-          <span>SYS.READY</span>
+         
           <div className="hud-line"></div>
           <span>FPS: <strong className="text-[#00f3ff]" ref={fpsRef}>60</strong></span>
         </div>
@@ -1022,7 +1011,7 @@ export default function WebArchitecturePage() {
         <div className="flex justify-between items-center">
           <span>COORD: <strong className="text-[#00f3ff]" ref={coordRef}>000</strong></span>
           <div className="hud-line"></div>
-          <span>VER 2.1 [OPT]</span>
+         
         </div>
       </div>
 
