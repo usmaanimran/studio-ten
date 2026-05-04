@@ -52,17 +52,32 @@ export default function Preloader({ onComplete }: { onComplete: () => void }) {
               layout="position"
               layoutId="word-studio" 
               transition={{ duration: 1.4, ease: [0.76, 0, 0.24, 1] }}
-              className="block font-sans whitespace-nowrap text-[12vw] md:text-[10vw] font-black uppercase tracking-tighter leading-[0.8] text-white"
+              className="relative block font-sans whitespace-nowrap text-[12vw] md:text-[10vw] font-black uppercase tracking-tighter leading-[0.8] text-white"
             >
-              STUDIO
+              <span className="invisible pointer-events-none select-none" aria-hidden="true">
+                STUDIO
+              </span>
+              <span className="absolute top-0 left-0 w-full h-full text-left pointer-events-none select-none" aria-hidden="true">
+                <span style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                  STUDIO
+                </span>
+              </span>
             </motion.span>
+            
             <motion.span 
               layout="position"
               layoutId="word-ten" 
               transition={{ duration: 1.4, ease: [0.76, 0, 0.24, 1] }}
-              className="block font-sans whitespace-nowrap text-[12vw] md:text-[10vw] font-black uppercase tracking-tighter leading-[0.8] text-white"
+              className="relative block font-sans whitespace-nowrap text-[12vw] md:text-[10vw] font-black uppercase tracking-tighter leading-[0.8] text-white"
             >
-              TEN
+              <span className="invisible pointer-events-none select-none" aria-hidden="true">
+                TEN
+              </span>
+              <span className="absolute top-0 left-0 w-full h-full text-left pointer-events-none select-none" aria-hidden="true">
+                <span style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                  TEN
+                </span>
+              </span>
             </motion.span>
           </div>
         </motion.div>
