@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Lenis from 'lenis';
 import SysReturnButton from '../SysReturnButton';
 import ZoomTunnel from '../ZoomTunnel';
+import ScrollManifesto from '../ScrollManifesto';
 
 // --- DYNAMIC CONFIGURATION ---
 const CONFIG = {
@@ -18,11 +19,28 @@ const START_DELAY_Z = 1500;
 const MAX_DEPTH = (CONFIG.itemCount - 1) * CONFIG.zGap + START_DELAY_Z;
 const TOTAL_SCROLL_PX = MAX_DEPTH / CONFIG.camSpeed;
 
-const TEXTS = [
-  "ENGINE", "SYSTEM", "MATRIX", "AGENTS", "VECTOR", 
-  "SIGNAL", "STREAM", "MODELS", "BRUTAL", "PIXELS", 
-  "MOTION", "FLUIDS", "VISION", "BEYOND", "IMPACT", 
-  "FUTURE", "PROMPT", "SCRIPT", "SCROLL", "LAYERS"
+// Merged Text and Description Mapping
+const CARD_DATA = [
+  { text: "Foundation", desc: "Establishing the base layer protocols and structural definitions." },
+  { text: "LOGIC", desc: "Processing rules, decision trees, and core algorithms." },
+  { text: "SYNTAX", desc: "Constructing clean, scalable, and modern codebases." },
+  { text: "STRUCTURE", desc: "Architecting robust databases and cloud environments." },
+  { text: "Visuals", desc: "Crafting the initial aesthetic identity and brand language." },
+  { text: "CANVAS", desc: "Painting pixels dynamically with WebGL matrices." },
+  { text: "MOTION", desc: "Orchestrating smooth digital kinetics and transitions." },
+  { text: "RENDER", desc: "Generating high-fidelity, optimized visual outputs." },
+  { text: "Experience", desc: "Designing intuitive user journeys and interfaces." },
+  { text: "IMMERSION", desc: "Creating deep, engaging virtual environments." },
+  { text: "FLUIDS", desc: "Simulating complex, organic digital mechanics." },
+  { text: "VISION", desc: "Translating abstract ideas into interactive reality." },
+  { text: "SEQUENCE", desc: "Chaining functional events for maximum impact." },
+  { text: "SCRIPT", desc: "Writing the underlying narrative and interactive logic." },
+  { text: "CONTEXT", desc: "Grounding features in tangible, real-world user needs." },
+  { text: "Narration", desc: "Guiding users through the complex information flow." },
+  { text: "EMOTION", desc: "Evoking organic feeling through micro-interactions." },
+  { text: "JOURNEY", desc: "Mapping out the user's end-to-end digital path." },
+  { text: "IMPACT", desc: "Leaving a lasting, measurable digital footprint." },
+  { text: "STORY", desc: "Telling your brand's unique narrative tale." }
 ];
 
 // ============================================================================
@@ -616,7 +634,8 @@ export default function WebArchitecturePage() {
     visualVelocity: 0,
     lastHudUpdate: 0,
     worldTrans: '',
-    viewportFov: ''
+    viewportFov: '',
+    hoveredCardIdx: -1 // Tracks mouse hover index for typewriter trigger
   });
 
   useEffect(() => {
@@ -636,10 +655,11 @@ export default function WebArchitecturePage() {
     for (let i = 0; i < CONFIG.itemCount; i++) {
       const zPos = -START_DELAY_Z - (i * CONFIG.zGap);
       const isHeading = i % 4 === 0;
+      const cardDatum = CARD_DATA[i % CARD_DATA.length];
       
       if (isHeading) {
         newItems.push({
-          id: `item-${i}`, type: 'text', text: TEXTS[i % TEXTS.length],
+          id: `item-${i}`, type: 'text', text: cardDatum.text,
           x: 0, y: 0, rot: 0, baseZ: zPos
         });
       } else {
@@ -652,8 +672,10 @@ export default function WebArchitecturePage() {
         const rot = (Math.random() - 0.5) * 30;
         
         newItems.push({
-          id: `item-${i}`, type: 'card', text: TEXTS[i % TEXTS.length],
-          randId: Math.floor(Math.random() * 9999), gridX: Math.floor(Math.random() * 10), gridY: Math.floor(Math.random() * 10),
+          id: `item-${i}`, type: 'card', 
+          text: cardDatum.text, desc: cardDatum.desc,
+          randId: Math.floor(Math.random() * 9999), 
+          gridX: Math.floor(Math.random() * 10), gridY: Math.floor(Math.random() * 10),
           dataSize: (Math.random() * 100).toFixed(1), x, y, rot, baseZ: zPos
         });
       }
@@ -691,7 +713,7 @@ export default function WebArchitecturePage() {
 
     let rafId: number;
     let lastTime = performance.now();
-    const isMobileCached = window.innerWidth < 768; // Removed from loop for performance
+    const isMobileCached = window.innerWidth < 768;
 
     const loop = (time: number) => {
       lenis.raf(time);
@@ -753,11 +775,14 @@ export default function WebArchitecturePage() {
 
       // OPTIMIZATION 4: Aggressive internal state caching per element (eliminates layout thrashing)
       itemsData.forEach((item, i) => {
-        const el = itemRefs.current[i] as any; // Cast for internal cache attachment
+        const el = itemRefs.current[i] as any; 
         if (!el) return;
 
-        // Create a fast inline cache attached directly to the DOM node
-        const cache = el._cache || (el._cache = { alpha: null, trans: null, vis: null, shadow: null, active: null });
+        const cache = el._cache || (el._cache = { 
+          alpha: null, trans: null, vis: null, shadow: null, 
+          active: null, typeStart: 0, chars: 0,
+          descSpan: null, cursor: null // DOM node caching for typewriter
+        });
 
         let vizZ = item.baseZ + cameraZ;
         let alpha = 1;
@@ -772,14 +797,13 @@ export default function WebArchitecturePage() {
 
         const isHidden = alpha <= 0.01;
         
-        // OPTIMIZATION 5: Keep the heavy 'title' always rendered in GPU to fix the "return to WEB DEV" stutter
         const targetVis = (isHidden && item.type !== 'title') ? 'hidden' : 'visible';
         if (cache.vis !== targetVis) {
           el.style.visibility = targetVis;
           cache.vis = targetVis;
         }
 
-        if (targetVis === 'hidden') return; // Skip transform calculations if entirely hidden
+        if (targetVis === 'hidden') return; 
 
         const alphaStr = alpha.toFixed(3);
         if (cache.alpha !== alphaStr) {
@@ -796,19 +820,28 @@ export default function WebArchitecturePage() {
           trans += ` rotateZ(${item.rot}deg)`;
           
           if (item.type !== 'title') {
-             if (Math.abs(s.visualVelocity) > 1) {
-                const maxSplit = 6; 
-                // OPTIMIZATION 6: Round text-shadow offset to prevent sub-pixel paint recalculations
-                const intOffset = Math.round(Math.min(Math.max(s.visualVelocity * 1.5, -maxSplit), maxSplit));
-                
-                if (cache.shadow !== intOffset) {
-                   el.style.textShadow = `${intOffset}px 0 var(--accent), ${-intOffset}px 0 var(--accent-2)`;
-                   cache.shadow = intOffset;
+             // 1. Calculate a perfectly smooth float offset (no Math.round)
+             const maxSplit = isMobileCached ? 3 : 8; 
+             const sensitivity = isMobileCached ? 0.4 : 1.5; 
+             
+             let offset = s.visualVelocity * sensitivity;
+             
+             // 2. Clamp it to our max bounds
+             offset = Math.max(Math.min(offset, maxSplit), -maxSplit);
+             
+             // 3. Higher threshold (> 0.8) ensures it NEVER gets stuck in the "0px red" zone.
+             // Using toFixed(2) gives us buttery smooth sub-pixel rendering (e.g., 2.45px)
+             if (Math.abs(offset) > 0.8) {
+                const shadowStr = `${offset.toFixed(2)}px 0 var(--accent), ${(-offset).toFixed(2)}px 0 var(--accent-2)`;
+                if (cache.shadow !== shadowStr) {
+                   el.style.textShadow = shadowStr;
+                   cache.shadow = shadowStr;
                 }
              } else {
-                if (cache.shadow !== 0) {
+                // Instantly and smoothly snaps back to the resting grey/white glow
+                if (cache.shadow !== 'glow') {
                    el.style.textShadow = '0 0 30px rgba(255, 255, 255, 0.1)';
-                   cache.shadow = 0;
+                   cache.shadow = 'glow';
                 }
              }
           }
@@ -823,12 +856,56 @@ export default function WebArchitecturePage() {
            cache.trans = trans;
         }
 
+        // ====================================================================
+        // JS RAF TYPEWRITER LOGIC (BYPASSES REACT STATE)
+        // ====================================================================
         if (item.type === 'card') {
-          const isActive = i === activeCardIdx;
+          const isActive = i === activeCardIdx || s.hoveredCardIdx === i;
+          
           if (cache.active !== isActive) {
-             if (isActive) el.classList.add('is-active');
-             else el.classList.remove('is-active');
+             if (isActive) {
+               el.classList.add('is-active');
+               cache.typeStart = time; // Lock in the timestamp we started typing
+             } else {
+               el.classList.remove('is-active');
+               cache.typeStart = 0; // Reset
+             }
              cache.active = isActive;
+          }
+
+          if (cache.active && cache.typeStart) {
+             const elapsed = time - cache.typeStart;
+             
+             // 🔥 UPDATE THIS LINE: Lower number = faster typing (8ms per character)
+             const charsToShow = Math.floor(elapsed / 10); 
+             
+             if (cache.chars !== charsToShow) {
+               // Initial DOM query cache to prevent querying every frame
+               if (!cache.descSpan) cache.descSpan = el.querySelector('.type-out');
+               if (!cache.cursor) cache.cursor = el.querySelector('.type-cursor');
+               
+               if (cache.descSpan) {
+                 if (charsToShow <= item.desc.length) {
+                    cache.descSpan.textContent = item.desc.slice(0, charsToShow);
+                    if (cache.cursor) cache.cursor.style.opacity = '1';
+                 } else {
+                    // Done typing: blink cursor
+                    if (cache.cursor) cache.cursor.style.opacity = Math.floor(time / 400) % 2 === 0 ? '1' : '0';
+                 }
+               }
+               cache.chars = charsToShow;
+             }
+          } else {
+
+             // Wipes text clean immediately when card is out of focus
+             if (cache.chars !== 0) {
+               if (!cache.descSpan) cache.descSpan = el.querySelector('.type-out');
+               if (!cache.cursor) cache.cursor = el.querySelector('.type-cursor');
+               
+               if (cache.descSpan) cache.descSpan.textContent = '';
+               if (cache.cursor) cache.cursor.style.opacity = '0';
+               cache.chars = 0;
+             }
           }
         }
       });
@@ -995,21 +1072,41 @@ export default function WebArchitecturePage() {
           width: 100%; height: 100%; border-color: var(--accent);
         }
 
-        .big-text {
-          font-family: var(--font-geist-sans, sans-serif); font-size: 15vw; font-weight: 900;
+       .big-text {
+          font-family: var(--font-geist-sans, sans-serif); 
+          font-size: 15vw; 
+          font-weight: 900;
           color: rgba(255, 255, 255, 0.03); 
           -webkit-text-stroke: 2px rgba(255, 255, 255, 0.25); 
-          text-transform: uppercase; white-space: nowrap; transform: translate(-50%, -50%);
-          pointer-events: none; letter-spacing: -0.5rem; 
+          text-transform: uppercase; 
+          white-space: nowrap; 
+          transform: translate(-50%, -50%);
+          pointer-events: none; 
+          letter-spacing: -0.05em; 
+          
+          /* THE TANK FIX: Massive horizontal padding + transparent border */
+          padding: 0 10vw; 
+          border: 1px solid transparent;
+        }
+
+        @media (max-width: 768px) {
+          .big-text {
+            font-size: 11vw; 
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.25);
+            
+            /* Even bigger padding on mobile because touch-scroll velocity throws the shadow further */
+            padding: 0 25vw; 
+          }
         }
       `}</style>
 
       <div className="relative w-full z-[200] pointer-events-none">
-        <div style={{ height: `calc(${TOTAL_SCROLL_PX}px + 50px)` }} />
-        <div className="relative w-full pointer-events-auto">
-          <ZoomTunnel />
-        </div>
-      </div>
+  <div style={{ height: `calc(${TOTAL_SCROLL_PX}px + 50px)` }} />
+  <div className="relative w-full pointer-events-auto">
+    <ZoomTunnel />
+    <ScrollManifesto /> {/* <--- Placed immediately after ZoomTunnel */}
+  </div>
+</div>
 
       <motion.div
         initial={{ opacity: 0, y: -20 }} 
@@ -1067,12 +1164,29 @@ export default function WebArchitecturePage() {
             } else if (item.type === 'card') {
               return (
                 <div key={item.id} className="hyper-item" ref={(el) => { itemRefs.current[i] = el; }}>
-                  <div className="hyper-card font-mono text-white">
+                  <div 
+                    className="hyper-card font-mono text-white"
+                    onMouseEnter={() => { stateRef.current.hoveredCardIdx = i; }}
+                    onMouseLeave={() => { 
+                      if (stateRef.current.hoveredCardIdx === i) {
+                        stateRef.current.hoveredCardIdx = -1; 
+                      }
+                    }}
+                  >
                     <div className="border-b border-[rgba(255,255,255,0.1)] pb-2 sm:pb-4 mb-2 sm:mb-4 flex justify-between items-center">
                       <span className="text-[#ff003c] text-xs">ID-{item.randId}</span>
                       <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#ff003c]"></div>
                     </div>
+                    
                     <h2 className="text-3xl sm:text-4xl leading-[0.9] m-0 uppercase font-bold mix-blend-hard-light">{item.text}</h2>
+                    
+                    <div className="mt-4 mb-auto h-[60px]">
+                       <p className="text-xs text-[rgba(255,255,255,0.7)] leading-relaxed font-mono">
+                         <span className="type-out"></span>
+                         <span className="type-cursor text-[#ff003c] opacity-0">_</span>
+                       </p>
+                    </div>
+
                     <div className="mt-auto text-[10px] text-[rgba(255,255,255,0.4)] flex justify-between">
                       <span>GRID: {item.gridX}x{item.gridY}</span>
                       <span>DATA_SIZE: {item.dataSize}MB</span>
