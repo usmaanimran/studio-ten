@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Lenis from 'lenis';
 import SysReturnButton from '../SysReturnButton';
+import ZoomTunnel from '../ZoomTunnel';
 
 // --- DYNAMIC CONFIGURATION ---
 const CONFIG = {
@@ -25,7 +26,7 @@ const TEXTS = [
 ];
 
 // ============================================================================
-// NATIVE FLUID CANVAS (THE NEON FOG - FULLY RESTORED)
+// NATIVE FLUID CANVAS (THE NEON FOG)
 // ============================================================================
 function NativeFluidCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -44,8 +45,8 @@ function NativeFluidCanvas() {
       const isMobile = window.innerWidth < 768;
       
       const config = {
-  TEXTURE_DOWNSAMPLE: isMobile ? 1 : 0, // 1 for mobile (half-res), 0 for desktop (full-res)
-  DENSITY_DISSIPATION: 0.97,
+        TEXTURE_DOWNSAMPLE: isMobile ? 1 : 0,
+        DENSITY_DISSIPATION: 0.97,
         VELOCITY_DISSIPATION: 0.98,
         PRESSURE_DISSIPATION: 0.8,
         PRESSURE_ITERATIONS: isMobile ? 5 : 20,
@@ -499,12 +500,14 @@ function NativeFluidCanvas() {
         pointer.color = HSVtoRGB(hue, 1.0, 1.0);
 
         if (pointer.x === 0 && pointer.y === 0) {
-          pointer.x = e.offsetX; pointer.y = e.offsetY; return;
+          pointer.x = e.clientX; pointer.y = e.clientY; return;
         }
 
-        const dx = e.offsetX - pointer.x; const dy = e.offsetY - pointer.y;
+        const dx = e.clientX - pointer.x; const dy = e.clientY - pointer.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const steps = Math.min(20, Math.max(1, Math.floor(dist / 20))); 
+        
+        // OPTIMIZATION 1: Capped max steps to dramatically reduce WebGL draw queue on fast mouse glides
+        const steps = Math.min(6, Math.max(1, Math.floor(dist / 30))); 
 
         for (let i = 1; i <= steps; i++) {
           pointer.queue.push({
@@ -512,7 +515,7 @@ function NativeFluidCanvas() {
             dx: dx * 10.0, dy: dy * 10.0, color: pointer.color
           });
         }
-        pointer.x = e.offsetX; pointer.y = e.offsetY;
+        pointer.x = e.clientX; pointer.y = e.clientY;
         pointer.dx = dx * 12.0; pointer.dy = dy * 12.0;
         pointer.down = true; 
       };
@@ -527,7 +530,9 @@ function NativeFluidCanvas() {
             const dx = touches[i].clientX - pointer.x;
             const dy = touches[i].clientY - pointer.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            const steps = Math.min(20, Math.max(1, Math.floor(dist / 20)));
+            
+            // OPTIMIZATION 1.5: Capped touch steps to prevent mobile stutters
+            const steps = Math.min(6, Math.max(1, Math.floor(dist / 30)));
 
             for (let step = 1; step <= steps; step++) {
               pointer.queue.push({
@@ -565,9 +570,9 @@ function NativeFluidCanvas() {
         }
       };
 
-      canvas.addEventListener('mousemove', handleMouseMove);
-      canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
-      canvas.addEventListener('touchstart', handleTouchStart, { passive: true });
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('touchmove', handleTouchMove, { passive: true });
+      window.addEventListener('touchstart', handleTouchStart, { passive: true });
       window.addEventListener('mouseleave', handleMouseLeave);
       window.addEventListener('touchend', handleTouchEnd);
 
@@ -575,9 +580,9 @@ function NativeFluidCanvas() {
 
       cleanupWebGL = () => {
         cancelAnimationFrame(animationId);
-        canvas.removeEventListener('mousemove', handleMouseMove);
-        canvas.removeEventListener('touchmove', handleTouchMove);
-        canvas.removeEventListener('touchstart', handleTouchStart);
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('touchmove', handleTouchMove);
+        window.removeEventListener('touchstart', handleTouchStart);
         window.removeEventListener('mouseleave', handleMouseLeave);
         window.removeEventListener('touchend', handleTouchEnd);
       };
@@ -608,7 +613,10 @@ export default function WebArchitecturePage() {
   const stateRef = useRef({
     mouseX: 0,
     mouseY: 0,
-    visualVelocity: 0 
+    visualVelocity: 0,
+    lastHudUpdate: 0,
+    worldTrans: '',
+    viewportFov: ''
   });
 
   useEffect(() => {
@@ -636,8 +644,6 @@ export default function WebArchitecturePage() {
         });
       } else {
         const angle = (i / CONFIG.itemCount) * Math.PI * 6;
-        
-        // --- MOBILE ALIGNMENT FIX ---
         const radiusX = isMobile ? w * 0.05 : w * 0.3; 
         const radiusY = isMobile ? h * 0.25 : h * 0.3;
         
@@ -664,7 +670,7 @@ export default function WebArchitecturePage() {
     setItemsData(newItems);
   }, []);
 
-  // --- OPTIMIZED LENIS INTEGRATION FOR MOBILE ---
+  // --- OPTIMIZED LENIS INTEGRATION ---
   useEffect(() => {
     if (itemsData.length === 0) return;
 
@@ -673,7 +679,7 @@ export default function WebArchitecturePage() {
       wheelMultiplier: 1,
       smoothWheel: true,
       syncTouch: true, 
-      touchMultiplier: 1.2, // --- TOUCH MULTIPLIER TIGHTENED ---
+      touchMultiplier: 1.2,
     });
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -685,6 +691,7 @@ export default function WebArchitecturePage() {
 
     let rafId: number;
     let lastTime = performance.now();
+    const isMobileCached = window.innerWidth < 768; // Removed from loop for performance
 
     const loop = (time: number) => {
       lenis.raf(time);
@@ -693,42 +700,45 @@ export default function WebArchitecturePage() {
       const rawDelta = time - lastTime;
       lastTime = time;
       
-      if (time % 100 < 16 && fpsRef.current) {
-        fpsRef.current.innerText = Math.round(1000 / rawDelta).toString(); 
-      }
-
       const currentScroll = lenis.scroll;
-      
       const safeVelocity = Math.max(-50, Math.min(50, lenis.velocity));
       s.visualVelocity += (safeVelocity * 1.5 - s.visualVelocity) * 0.1;
 
-      if (velRef.current) velRef.current.innerText = Math.abs(s.visualVelocity).toFixed(2);
-      if (coordRef.current) coordRef.current.innerText = currentScroll.toFixed(0);
+      // OPTIMIZATION 2: Throttle DOM layout writes (HUD updates)
+      if (time - s.lastHudUpdate > 100) {
+         if (fpsRef.current) fpsRef.current.innerText = Math.round(1000 / rawDelta).toString(); 
+         if (velRef.current) velRef.current.innerText = Math.abs(s.visualVelocity).toFixed(1);
+         if (coordRef.current) coordRef.current.innerText = currentScroll.toFixed(0);
+         s.lastHudUpdate = time;
+      }
 
-      const isMobile = window.innerWidth < 768;
-      const tiltMult = isMobile ? 2 : 5;
+      const tiltMult = isMobileCached ? 2 : 5;
       const tiltX = s.mouseY * tiltMult - s.visualVelocity * 0.3;
       const tiltY = s.mouseX * tiltMult;
 
-      if (worldRef.current) {
-        worldRef.current.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+      // OPTIMIZATION 3: Cache World Container Transforms
+      const newWorldTrans = `rotateX(${tiltX.toFixed(2)}deg) rotateY(${tiltY.toFixed(2)}deg)`;
+      if (s.worldTrans !== newWorldTrans && worldRef.current) {
+        worldRef.current.style.transform = newWorldTrans;
+        s.worldTrans = newWorldTrans;
       }
 
       const baseFov = 1000;
-      const maxFovDrop = isMobile ? 200 : 600; 
-      const fovWarp = isMobile ? 4 : 10;
-      
+      const maxFovDrop = isMobileCached ? 200 : 600; 
+      const fovWarp = isMobileCached ? 4 : 10;
       const fov = baseFov - Math.min(Math.abs(s.visualVelocity) * fovWarp, maxFovDrop);
-      if (viewportRef.current) {
-        viewportRef.current.style.perspective = `${fov}px`;
+      
+      const newFov = `${fov.toFixed(1)}px`;
+      if (s.viewportFov !== newFov && viewportRef.current) {
+        viewportRef.current.style.perspective = newFov;
+        s.viewportFov = newFov;
       }
 
       const cameraZ = currentScroll * CONFIG.camSpeed;
 
-      // --- NEW: Calculate the active card closest to the camera focus ---
       let activeCardIdx = -1;
       let minZDist = Infinity;
-      const TARGET_Z = 200; // The Z-depth focal point right before fade-out
+      const TARGET_Z = 200;
 
       itemsData.forEach((item, i) => {
         if (item.type === 'card') {
@@ -741,9 +751,13 @@ export default function WebArchitecturePage() {
         }
       });
 
+      // OPTIMIZATION 4: Aggressive internal state caching per element (eliminates layout thrashing)
       itemsData.forEach((item, i) => {
-        const el = itemRefs.current[i];
+        const el = itemRefs.current[i] as any; // Cast for internal cache attachment
         if (!el) return;
+
+        // Create a fast inline cache attached directly to the DOM node
+        const cache = el._cache || (el._cache = { alpha: null, trans: null, vis: null, shadow: null, active: null });
 
         let vizZ = item.baseZ + cameraZ;
         let alpha = 1;
@@ -756,48 +770,65 @@ export default function WebArchitecturePage() {
         }
         if (alpha < 0) alpha = 0;
 
-        if (alpha <= 0.01) {
-          if (el.style.visibility !== 'hidden') {
-            el.style.visibility = 'hidden';
-            el.style.opacity = '0';
-          }
-          return; 
-        } else {
-          if (el.style.visibility !== 'visible') {
-            el.style.visibility = 'visible';
-          }
+        const isHidden = alpha <= 0.01;
+        
+        // OPTIMIZATION 5: Keep the heavy 'title' always rendered in GPU to fix the "return to WEB DEV" stutter
+        const targetVis = (isHidden && item.type !== 'title') ? 'hidden' : 'visible';
+        if (cache.vis !== targetVis) {
+          el.style.visibility = targetVis;
+          cache.vis = targetVis;
         }
 
-        el.style.opacity = alpha.toString();
-        let trans = `translate3d(${item.x}px, ${item.y}px, ${vizZ}px)`;
+        if (targetVis === 'hidden') return; // Skip transform calculations if entirely hidden
+
+        const alphaStr = alpha.toFixed(3);
+        if (cache.alpha !== alphaStr) {
+          el.style.opacity = alphaStr;
+          cache.alpha = alphaStr;
+        }
+
+        let trans = `translate3d(${item.x.toFixed(1)}px, ${item.y.toFixed(1)}px, ${vizZ.toFixed(1)}px)`;
         
         if (item.type === 'star') {
           const stretch = Math.max(1, Math.min(1 + Math.abs(s.visualVelocity) * 0.1, 10));
-          trans += ` scale3d(1, 1, ${stretch})`;
-       } else if (item.type === 'text' || item.type === 'title') {
+          trans += ` scale3d(1, 1, ${stretch.toFixed(2)})`;
+        } else if (item.type === 'text' || item.type === 'title') {
           trans += ` rotateZ(${item.rot}deg)`;
           
-          if (Math.abs(s.visualVelocity) > 1 && item.type !== 'title') {
-            const maxSplit = 6; 
-            const offset = Math.min(Math.max(s.visualVelocity * 1.5, -maxSplit), maxSplit);
-            el.style.textShadow = `${offset}px 0 var(--accent), ${-offset}px 0 var(--accent-2)`;
-          } else if (item.type !== 'title') {
-            el.style.textShadow = '0 0 30px rgba(255, 255, 255, 0.1)';
+          if (item.type !== 'title') {
+             if (Math.abs(s.visualVelocity) > 1) {
+                const maxSplit = 6; 
+                // OPTIMIZATION 6: Round text-shadow offset to prevent sub-pixel paint recalculations
+                const intOffset = Math.round(Math.min(Math.max(s.visualVelocity * 1.5, -maxSplit), maxSplit));
+                
+                if (cache.shadow !== intOffset) {
+                   el.style.textShadow = `${intOffset}px 0 var(--accent), ${-intOffset}px 0 var(--accent-2)`;
+                   cache.shadow = intOffset;
+                }
+             } else {
+                if (cache.shadow !== 0) {
+                   el.style.textShadow = '0 0 30px rgba(255, 255, 255, 0.1)';
+                   cache.shadow = 0;
+                }
+             }
           }
         } else {
           const t = time * 0.001;
           const float = Math.sin(t + item.x) * 10;
-          trans += ` rotateZ(${item.rot}deg) rotateY(${float}deg)`;
+          trans += ` rotateZ(${item.rot}deg) rotateY(${float.toFixed(1)}deg)`;
         }
         
-        el.style.transform = trans;
+        if (cache.trans !== trans) {
+           el.style.transform = trans;
+           cache.trans = trans;
+        }
 
-        // --- NEW: Apply the active state directly to the DOM element ---
         if (item.type === 'card') {
-          if (i === activeCardIdx) {
-            el.classList.add('is-active');
-          } else {
-            el.classList.remove('is-active');
+          const isActive = i === activeCardIdx;
+          if (cache.active !== isActive) {
+             if (isActive) el.classList.add('is-active');
+             else el.classList.remove('is-active');
+             cache.active = isActive;
           }
         }
       });
@@ -925,8 +956,6 @@ export default function WebArchitecturePage() {
           background: white; transform: translate(-50%, -50%);
         }
         
-        /* --- MOBILE CARD SIZING CSS FIX --- */
-        /* --- MOBILE CARD SIZING CSS FIX --- */
         .hyper-card {
           width: 250px; height: 380px; background: var(--card-bg);
           border: 1px solid var(--border); position: relative; padding: 1.5rem;
@@ -940,7 +969,6 @@ export default function WebArchitecturePage() {
           .hyper-card { width: 320px; height: 460px; padding: 2rem; }
         }
 
-        /* --- ACTIVE & HOVER STATES (Combined) --- */
         .hyper-item.is-active .hyper-card,
         @media (hover: hover) {
           .hyper-card:hover {
@@ -974,23 +1002,23 @@ export default function WebArchitecturePage() {
           text-transform: uppercase; white-space: nowrap; transform: translate(-50%, -50%);
           pointer-events: none; letter-spacing: -0.5rem; 
         }
-        .big-text {
-          font-family: var(--font-geist-sans, sans-serif); font-size: 15vw; font-weight: 900;
-          color: rgba(255, 255, 255, 0.03); 
-          -webkit-text-stroke: 2px rgba(255, 255, 255, 0.25); 
-          text-transform: uppercase; white-space: nowrap; transform: translate(-50%, -50%);
-          pointer-events: none; letter-spacing: -0.5rem; 
-        }
       `}</style>
 
-      <div className="absolute top-0 w-full z-[-1]" style={{ height: `calc(${TOTAL_SCROLL_PX}px + 100vh)` }} />
+      <div className="relative w-full z-[200] pointer-events-none">
+        <div style={{ height: `calc(${TOTAL_SCROLL_PX}px + 50px)` }} />
+        <div className="relative w-full pointer-events-auto">
+          <ZoomTunnel />
+        </div>
+      </div>
 
       <motion.div
-  initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
-  className="fixed top-6 left-6 sm:top-10 sm:left-10 z-[100]"
->
-  <SysReturnButton className="text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-colors mix-blend-difference font-mono" />
-</motion.div>
+        initial={{ opacity: 0, y: -20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
+        className="fixed top-6 left-6 sm:top-10 sm:left-10 z-[999]" 
+      >
+        <SysReturnButton className="text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-colors mix-blend-difference font-mono" />
+      </motion.div>
 
       <div className="fixed inset-0 z-0 bg-black pointer-events-auto touch-pan-y">
         {mountCanvas && (
@@ -1006,7 +1034,6 @@ export default function WebArchitecturePage() {
 
       <div className="hyper-hud mix-blend-difference">
         <div className="flex justify-between items-center">
-         
           <div className="hud-line"></div>
           <span>FPS: <strong className="text-[#00f3ff]" ref={fpsRef}>60</strong></span>
         </div>
@@ -1016,7 +1043,6 @@ export default function WebArchitecturePage() {
         <div className="flex justify-between items-center">
           <span>COORD: <strong className="text-[#00f3ff]" ref={coordRef}>000</strong></span>
           <div className="hud-line"></div>
-         
         </div>
       </div>
 
@@ -1027,8 +1053,8 @@ export default function WebArchitecturePage() {
               return (
                 <div key={item.id} className="hyper-item" ref={(el) => { itemRefs.current[i] = el; }}>
                   <div className="title-text-container">
-                     <div className="strobing-line" data-text="WEB">WEB</div>
-                     <div className="strobing-line" data-text="DEV">DEV</div>
+                      <div className="strobing-line" data-text="WEB">WEB</div>
+                      <div className="strobing-line" data-text="DEV">DEV</div>
                   </div>
                 </div>
               );

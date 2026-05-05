@@ -23,6 +23,21 @@ export default function PageTransitionEffect() {
     return () => window.removeEventListener('START_GLITCH', onStart);
   }, []);
 
+  useEffect(() => {
+    const preventMiddleClickScroll = (e: MouseEvent) => {
+      if (e.button === 1) {
+        e.preventDefault();
+      }
+    };
+
+    // { passive: false } is required to call e.preventDefault()
+    window.addEventListener('mousedown', preventMiddleClickScroll, { passive: false });
+
+    return () => {
+      window.removeEventListener('mousedown', preventMiddleClickScroll);
+    };
+  }, []);
+
   // 2. High-Performance State Machine
   useEffect(() => {
     let t1: NodeJS.Timeout;

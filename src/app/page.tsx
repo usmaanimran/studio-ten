@@ -421,6 +421,23 @@ export default function StudioTenHome() {
     }
   }, []);
 
+  
+  useEffect(() => {
+    // Intercept and block the middle-mouse click (button 1)
+    const preventMiddleClickScroll = (e: MouseEvent) => {
+      if (e.button === 1) {
+        e.preventDefault();
+      }
+    };
+
+    // { passive: false } is required so we can call e.preventDefault()
+    window.addEventListener('mousedown', preventMiddleClickScroll, { passive: false });
+
+    return () => {
+      window.removeEventListener('mousedown', preventMiddleClickScroll);
+    };
+  }, []);
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.matchMedia("(max-width: 768px)").matches || window.matchMedia("(pointer: coarse)").matches);
